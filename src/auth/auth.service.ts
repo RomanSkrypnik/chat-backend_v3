@@ -4,12 +4,14 @@ import { RegisterDto } from './dtos/register.dto'
 import { InjectRepository } from '@nestjs/typeorm'
 import { User } from './user.entity'
 import { Repository } from 'typeorm'
-import bcrypt from 'bcrypt'
+import * as bcrypt from 'bcrypt'
+import { TokenService } from '../token/token.service'
 
 @Injectable()
 export class AuthService {
     constructor(
-        @InjectRepository(User) private userRepository: Repository<User>
+        @InjectRepository(User) private userRepository: Repository<User>,
+        private tokenService: TokenService
     ) {}
 
     async register(registerDto: RegisterDto) {
@@ -28,10 +30,29 @@ export class AuthService {
 
         const password = await bcrypt.hash(registerDto.password, salt)
 
-        return this.userRepository.create({ ...registerDto, password })
+        return this.userRepository.save({ ...registerDto, password })
     }
 
-    login(loginDto: LoginDto) {
-        return 'test'
+    async login(loginDto: LoginDto) {
+        const user = await this.userRepository.findOne({
+            email: loginDto.email,
+        })
+
+        if (!user) {
+            throw new HttpException('User is not found', HttpStatus.BAD_REQUEST)
+        }
+
+        const passwordMatches = await bcrypt.compare(
+            loginDto.password,
+            user.password,
+        )
+
+        if (!passwordMatches) {
+            throw new HttpException('Wrong password', HttpStatus.BAD_REQUEST)
+        }
+
+        const tokens = this.tokenService.generateTokens(user)
+
+        return { ...tokens, user }
     }
 }
