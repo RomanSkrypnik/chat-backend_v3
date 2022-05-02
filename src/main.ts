@@ -9,6 +9,14 @@ async function bootstrap() {
     app.useGlobalPipes(new ValidationPipe())
     app.use(cookieParser())
 
+    app.enableCors({
+        origin: process.env.CLIENT_URL,
+        methods: 'GET,POST',
+        credentials: true,
+    })
+
+    app.setGlobalPrefix('api')
+
     await app.listen(process.env.APP_PORT || 5000)
 }
 
