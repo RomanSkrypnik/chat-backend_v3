@@ -1,23 +1,21 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common'
-import { LoginDto } from './dtos/login.dto'
-import { RegisterDto } from './dtos/register.dto'
-import { InjectRepository } from '@nestjs/typeorm'
-import { User } from './user.entity'
-import { Repository } from 'typeorm'
+import { RegisterDto, LoginDto } from './dtos'
 import * as bcrypt from 'bcrypt'
 import { TokenService } from '../token/token.service'
+import { UserService } from '../user/user.service'
 
 @Injectable()
 export class AuthService {
     constructor(
-        @InjectRepository(User) private userRepository: Repository<User>,
+        private userService: UserService,
         private tokenService: TokenService
     ) {}
 
     async register(registerDto: RegisterDto) {
-        const user = await this.userRepository.findOne({
-            email: registerDto.email,
-        })
+        const user = await this.userService.getByColumn(
+            registerDto.email,
+            'email'
+        )
 
         if (user) {
             throw new HttpException(
@@ -30,13 +28,11 @@ export class AuthService {
 
         const password = await bcrypt.hash(registerDto.password, salt)
 
-        return this.userRepository.save({ ...registerDto, password })
+        return this.userService.create({ ...registerDto, password })
     }
 
     async login(loginDto: LoginDto) {
-        const user = await this.userRepository.findOne({
-            email: loginDto.email,
-        })
+        const user = await this.userService.getByColumn(loginDto.email, 'email')
 
         if (!user) {
             throw new HttpException('User is not found', HttpStatus.BAD_REQUEST)
@@ -44,15 +40,19 @@ export class AuthService {
 
         const passwordMatches = await bcrypt.compare(
             loginDto.password,
-            user.password,
+            user.password
         )
 
         if (!passwordMatches) {
             throw new HttpException('Wrong password', HttpStatus.BAD_REQUEST)
         }
 
-        const tokens = this.tokenService.generateTokens(user)
+        const tokens = await this.tokenService.generateTokens(user)
 
-        return { ...tokens, user }
+        return { tokens, user }
+    }
+
+    async refresh(token) {
+
     }
 }

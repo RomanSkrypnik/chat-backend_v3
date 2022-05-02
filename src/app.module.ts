@@ -3,9 +3,16 @@ import { AuthModule } from './auth/auth.module'
 import { TypeOrmModule } from '@nestjs/typeorm'
 import { Connection } from 'typeorm'
 import config from './ormconfig'
+import { ConfigModule } from '@nestjs/config'
 
 @Module({
-    imports: [TypeOrmModule.forRoot(config), AuthModule],
+    imports: [
+        TypeOrmModule.forRoot(config),
+        ConfigModule.forRoot({
+            envFilePath: '.env',
+        }),
+        AuthModule,
+    ],
 })
 export class AppModule {
     constructor(private connection: Connection) {}

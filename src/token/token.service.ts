@@ -1,25 +1,28 @@
 import { Injectable } from '@nestjs/common'
-import jwt from 'jsonwebtoken'
-import { UserDto } from '../auth/dtos/user.dto'
+import { JwtService } from '@nestjs/jwt'
+import { TokensDto, UserDto } from '../auth/dtos'
 
 @Injectable()
 export class TokenService {
-    generateTokens(user: UserDto) {
-        const refreshToken = jwt.sign(user, process.env.JWT_REFRESH_KEY, {
-            expiresIn: '10h',
-        })
-        const accessToken = jwt.sign(user, process.env.JWT_ACCESS_KEY, {
-            expires: '30min',
-        })
+    constructor(private jwtService: JwtService) {}
 
-        return { refreshToken, accessToken }
-    }
+    async generateTokens(user: UserDto): Promise<TokensDto> {
+        const accessToken = await this.jwtService.signAsync(
+            { ...user },
+            {
+                secret: process.env.JWT_ACCESS_SECRET,
+                expiresIn: 60 * 15,
+            }
+        )
 
-    checkRefreshToken(token: string) {
-        return jwt.verify(token, process.env.JWT_REFRESH_SECRET)
-    }
+        const refreshToken = await this.jwtService.signAsync(
+            { ...user },
+            {
+                secret: process.env.JWT_REFRESH_SECRET,
+                expiresIn: 60 * 60 * 24 * 7,
+            }
+        )
 
-    checkAccessToken(token: string) {
-        return jwt.verify(token, process.env.JWT_ACCESS_SECRET)
+        return { accessToken, refreshToken }
     }
 }
