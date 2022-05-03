@@ -4,7 +4,6 @@ import { AuthService } from './auth.service'
 import { TokenModule } from '../token/token.module'
 import { UserModule } from '../user/user.module'
 import { AtStrategy, RtStrategy } from './strategies'
-import { TokenService } from '../token/token.service'
 
 @Module({
     imports: [TokenModule, UserModule],

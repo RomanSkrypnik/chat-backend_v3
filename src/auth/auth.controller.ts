@@ -14,6 +14,8 @@ import { Request, Response } from 'express'
 import { AuthGuard } from '@nestjs/passport'
 import { TokenService } from '../token/token.service'
 import { User } from '../user/user.entity'
+import { RtGuard } from './guards/rt.guard'
+import { AtGuard } from './guards/at.guard'
 
 @Controller('auth')
 export class AuthController {
@@ -37,18 +39,19 @@ export class AuthController {
     }
 
     @Get('logout')
-    @UseGuards(AuthGuard('at-strategy'))
+    @UseGuards(AtGuard)
     logout(@Res() res: Response) {
         res.clearCookie('refreshToken')
         res.status(HttpStatus.OK).json({ message: 'User is logged out' })
     }
 
     @Get('refresh')
-    @UseGuards(AuthGuard('rt-strategy'))
+    @UseGuards(RtGuard)
     async refresh(@Req() req: Request, @Res() res: Response) {
-        const data = await this.tokenService.generateTokens(req.user as User)
+        const user = req.user
+        const tokens = await this.tokenService.generateTokens(req.user as User)
 
-        res.cookie('refreshToken', data.refreshToken)
-        res.status(HttpStatus.OK).json({ data })
+        res.cookie('refreshToken', tokens.refreshToken)
+        res.status(HttpStatus.OK).json({ data: { user, tokens } })
     }
 }

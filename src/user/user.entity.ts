@@ -17,9 +17,15 @@ export class User {
     @Column()
     password: string
 
+    @Column({ unique: true })
+    hash: string
+
     @Column({ nullable: true })
     avatar: string
 
     @Column({ default: false })
     activated: boolean
+
+    @Column({ default: false })
+    online: boolean
 }
