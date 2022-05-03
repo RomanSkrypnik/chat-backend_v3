@@ -3,6 +3,7 @@ import { RegisterDto, LoginDto } from './dtos'
 import * as bcrypt from 'bcrypt'
 import { TokenService } from '../token/token.service'
 import { UserService } from '../user/user.service'
+import { randomBytes } from 'crypto'
 
 @Injectable()
 export class AuthService {
@@ -28,7 +29,9 @@ export class AuthService {
 
         const password = await bcrypt.hash(registerDto.password, salt)
 
-        return this.userService.create({ ...registerDto, password })
+        const hash = randomBytes(32).toString('hex')
+
+        return this.userService.create({ ...registerDto, password, hash })
     }
 
     async login(loginDto: LoginDto) {

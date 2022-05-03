@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm'
 import { Connection } from 'typeorm'
 import config from './ormconfig'
 import { ConfigModule } from '@nestjs/config'
+import MessageModule from './message/message.module'
 
 @Module({
     imports: [
@@ -12,6 +13,7 @@ import { ConfigModule } from '@nestjs/config'
             envFilePath: '.env',
         }),
         AuthModule,
+        MessageModule,
     ],
 })
 export class AppModule {

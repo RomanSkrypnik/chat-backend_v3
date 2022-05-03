@@ -17,8 +17,8 @@ import { AtGuard } from '../auth/guards/at.guard'
 export class MessageController {
     constructor(private messageService: MessageService) {}
 
-    @Get('get-messages')
     @UseGuards(AtGuard)
+    @Get('get-messages')
     async getMessages(
         @User('id') userId,
         @Body() body: { hash: string },
