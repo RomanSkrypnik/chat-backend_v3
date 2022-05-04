@@ -2,7 +2,7 @@ import {
     Column,
     Entity,
     JoinColumn,
-    OneToOne,
+    ManyToOne,
     PrimaryGeneratedColumn,
 } from 'typeorm'
 import { Chat } from '../chat/chat.entity'
@@ -16,13 +16,16 @@ export class Message {
     @Column()
     text: string
 
-    @OneToOne(() => Chat)
+    @ManyToOne(() => Chat, (chat) => chat.messages)
     @JoinColumn()
     chat: Chat
 
-    @OneToOne(() => User)
+    @ManyToOne(() => User, (user) => user.messages)
     @JoinColumn()
     user: User
+
+    @Column()
+    userId: number
 
     @Column()
     chatId: number

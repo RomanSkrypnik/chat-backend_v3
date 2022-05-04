@@ -6,7 +6,7 @@ const config: ConnectionOptions = {
     port: 3306,
     username: 'root',
     password: 'root',
-    database: 'chat-frontend_v3',
+    database: 'chat_v3',
     synchronize: false,
 
     entities: [__dirname + '/**/*.entity{.ts,.js}'],

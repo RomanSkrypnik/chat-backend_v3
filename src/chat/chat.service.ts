@@ -8,7 +8,7 @@ import { Repository } from 'typeorm'
 export class ChatService {
     constructor(
         @InjectRepository(Chat) private chatRepository: Repository<Chat>,
-        private userService: UserService
+        private userService: UserService,
     ) {}
 
     async getOrCreate(user1Id: number, user2Id: number) {

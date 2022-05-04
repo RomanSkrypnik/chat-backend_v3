@@ -1,4 +1,12 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm'
+import {
+    Column,
+    Entity,
+    ManyToOne,
+    OneToMany,
+    PrimaryGeneratedColumn,
+} from 'typeorm'
+import { Message } from '../message/message.entity'
+import { Chat } from '../chat/chat.entity'
 
 @Entity('User')
 export class User {
@@ -28,4 +36,10 @@ export class User {
 
     @Column({ default: false })
     online: boolean
+
+    @OneToMany(() => Message, (message) => message.user)
+    messages: Message[]
+
+    @OneToMany(() => Chat, (chat) => chat.user1 && chat.user2)
+    chats: Chat[]
 }
