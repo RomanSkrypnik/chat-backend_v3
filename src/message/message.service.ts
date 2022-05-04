@@ -15,10 +15,23 @@ export class MessageService {
         private chatService: ChatService
     ) {}
 
-    async getAll(user1Id: number, user2Id: number) {
-        const { id } = await this.chatService.getOrCreate(user1Id, user2Id)
+    async getAll(user1Id: number) {
+        const currUser = await this.userService.getByColumn(user1Id, 'id')
 
-        return await this.messageRepository.find({ where: { chatId: id } })
+        if (!currUser) {
+            throw new HttpException('User is not found', HttpStatus.BAD_REQUEST)
+        }
+
+        const chats = await this.chatService.getAll(user1Id)
+
+        return chats.map((chat) => {
+            const user = chat.user1.id === currUser.id ? chat.user2 : chat.user1
+
+            delete chat.user1
+            delete chat.user2
+
+            return { ...chat, user }
+        })
     }
 
     async create(messageDto: CreateMessageDto, userId: number) {

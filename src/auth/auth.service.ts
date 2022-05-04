@@ -1,13 +1,17 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common'
+import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common'
 import { RegisterDto, LoginDto } from './dtos'
 import * as bcrypt from 'bcrypt'
 import { TokenService } from '../token/token.service'
 import { UserService } from '../user/user.service'
 import { randomBytes } from 'crypto'
+import { InjectRepository } from '@nestjs/typeorm'
+import { User } from '../user/user.entity'
+import { Repository } from 'typeorm'
 
 @Injectable()
 export class AuthService {
     constructor(
+        @InjectRepository(User) private userRepository: Repository<User>,
         private userService: UserService,
         private tokenService: TokenService
     ) {}
@@ -15,13 +19,13 @@ export class AuthService {
     async register(registerDto: RegisterDto) {
         const user = await this.userService.getByColumn(
             registerDto.email,
-            'email'
+            'email',
         )
 
         if (user) {
             throw new HttpException(
                 'User with such email already exists',
-                HttpStatus.BAD_REQUEST
+                HttpStatus.BAD_REQUEST,
             )
         }
 
@@ -35,7 +39,11 @@ export class AuthService {
     }
 
     async login(loginDto: LoginDto) {
-        const user = await this.userService.getByColumn(loginDto.email, 'email')
+        const user = await this.userRepository
+            .createQueryBuilder('user')
+            .where('user.email = :email', { email: loginDto.email })
+            .addSelect('user.password')
+            .getOne()
 
         if (!user) {
             throw new HttpException('User is not found', HttpStatus.BAD_REQUEST)
@@ -52,10 +60,8 @@ export class AuthService {
 
         const tokens = await this.tokenService.generateTokens(user)
 
+        delete user.password
+
         return { tokens, user }
-    }
-
-    async refresh(token) {
-
     }
 }

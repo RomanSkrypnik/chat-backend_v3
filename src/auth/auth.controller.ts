@@ -49,7 +49,7 @@ export class AuthController {
     @UseGuards(RtGuard)
     async refresh(@Req() req: Request, @Res() res: Response) {
         const user = req.user
-        const tokens = await this.tokenService.generateTokens(req.user as User)
+        const tokens = await this.tokenService.generateTokens(user as User)
 
         res.cookie('refreshToken', tokens.refreshToken)
         res.status(HttpStatus.OK).json({ data: { user, tokens } })

@@ -1,10 +1,4 @@
-import {
-    Column,
-    Entity,
-    ManyToOne,
-    OneToMany,
-    PrimaryGeneratedColumn,
-} from 'typeorm'
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
 import { Message } from '../message/message.entity'
 import { Chat } from '../chat/chat.entity'
 
@@ -22,7 +16,7 @@ export class User {
     @Column({ unique: true })
     email: string
 
-    @Column()
+    @Column({ select: false })
     password: string
 
     @Column({ unique: true })
@@ -31,7 +25,7 @@ export class User {
     @Column({ nullable: true })
     avatar: string
 
-    @Column({ default: false })
+    @Column({ default: false, select: false })
     activated: boolean
 
     @Column({ default: false })

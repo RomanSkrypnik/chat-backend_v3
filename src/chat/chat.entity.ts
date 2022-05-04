@@ -13,17 +13,17 @@ export class Chat {
     @PrimaryGeneratedColumn()
     id: number
 
-    @Column()
+    @Column({ select: false })
     user1Id: number
 
-    @Column()
+    @Column({ select: false })
     user2Id: number
 
     @ManyToOne(() => User, (user) => user.chats)
-    user1: number
+    user1: User
 
     @ManyToOne(() => User, (user) => user.chats)
-    user2: number
+    user2: User
 
     @OneToMany(() => Message, (message) => message.chat)
     messages: Message[]

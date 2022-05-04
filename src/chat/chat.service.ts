@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common'
-import { UserService } from '../user/user.service'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Chat } from './chat.entity'
 import { Repository } from 'typeorm'
@@ -7,16 +6,32 @@ import { Repository } from 'typeorm'
 @Injectable()
 export class ChatService {
     constructor(
-        @InjectRepository(Chat) private chatRepository: Repository<Chat>,
-        private userService: UserService,
+        @InjectRepository(Chat) private chatRepository: Repository<Chat>
     ) {}
 
-    async getOrCreate(user1Id: number, user2Id: number) {
+    async getAll(userId: number): Promise<Chat[]> {
+        return await this.chatRepository.find({
+            where: [{ user1Id: userId }, { user2Id: userId }],
+            select: ['id'],
+            relations: ['user1', 'user2', 'messages', 'messages.user'],
+        })
+    }
+
+    async getOne(user1Id: number, user2Id: number): Promise<Chat> {
+        const condition = this._getCondition(user1Id, user2Id)
+
+        return await this.chatRepository.findOne({
+            where: condition,
+            select: ['id'],
+            relations: ['messages', 'messages.user'],
+        })
+    }
+
+    async getOrCreate(user1Id: number, user2Id: number): Promise<Chat> {
+        const condition = this._getCondition(user1Id, user2Id)
+
         let chat = await this.chatRepository.findOne({
-            where: [
-                { user1Id, user2Id },
-                { user1Id: user2Id, user2Id: user1Id },
-            ],
+            where: condition,
         })
 
         if (!chat) {
@@ -24,5 +39,12 @@ export class ChatService {
         }
 
         return chat
+    }
+
+    _getCondition(user1Id: number, user2Id: number) {
+        return [
+            { user1Id, user2Id },
+            { user1Id: user2Id, user2Id: user1Id },
+        ]
     }
 }

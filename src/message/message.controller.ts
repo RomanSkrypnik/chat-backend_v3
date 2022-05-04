@@ -19,12 +19,8 @@ export class MessageController {
 
     @UseGuards(AtGuard)
     @Get('get-messages')
-    async getMessages(
-        @User('id') userId,
-        @Body() body: { hash: string },
-        @Res() res: Response
-    ) {
-        const data = await this.messageService.getAll(userId, userId)
+    async getMessages(@User('id') userId, @Res() res: Response) {
+        const data = await this.messageService.getAll(userId)
         res.status(HttpStatus.OK).json({ data })
     }
 

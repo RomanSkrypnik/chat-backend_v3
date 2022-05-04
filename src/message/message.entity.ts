@@ -16,6 +16,12 @@ export class Message {
     @Column()
     text: string
 
+    @Column({ select: false })
+    userId: number
+
+    @Column({ select: false })
+    chatId: number
+
     @ManyToOne(() => Chat, (chat) => chat.messages)
     @JoinColumn()
     chat: Chat
@@ -23,10 +29,4 @@ export class Message {
     @ManyToOne(() => User, (user) => user.messages)
     @JoinColumn()
     user: User
-
-    @Column()
-    userId: number
-
-    @Column()
-    chatId: number
 }
