@@ -1,5 +1,6 @@
 import {
     Column,
+    CreateDateColumn,
     Entity,
     JoinColumn,
     ManyToOne,
@@ -21,6 +22,9 @@ export class Message {
 
     @Column({ select: false })
     chatId: number
+
+    @CreateDateColumn()
+    createdAt: Date
 
     @ManyToOne(() => Chat, (chat) => chat.messages)
     @JoinColumn()

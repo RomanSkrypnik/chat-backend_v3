@@ -1,8 +1,11 @@
-import { IsNotEmpty } from 'class-validator'
+import { UserDto } from '../../user/dtos'
 
 export class MessageDto {
-    @IsNotEmpty()
+    id: number
+
     text: string
 
     file: null
+
+    user: UserDto
 }

@@ -1,6 +1,13 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
+import {
+    BeforeInsert,
+    Column,
+    Entity,
+    OneToMany,
+    PrimaryGeneratedColumn,
+} from 'typeorm'
 import { Message } from '../message/message.entity'
 import { Chat } from '../chat/chat.entity'
+import * as bcrypt from 'bcrypt'
 
 @Entity('User')
 export class User {
@@ -36,4 +43,10 @@ export class User {
 
     @OneToMany(() => Chat, (chat) => chat.user1 && chat.user2)
     chats: Chat[]
+
+    @BeforeInsert()
+    async setPassword() {
+        const salt = await bcrypt.genSalt(6)
+        this.password = await bcrypt.hash(this.password, salt)
+    }
 }

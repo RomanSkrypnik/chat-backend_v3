@@ -19,23 +19,19 @@ export class AuthService {
     async register(registerDto: RegisterDto) {
         const user = await this.userService.getByColumn(
             registerDto.email,
-            'email',
+            'email'
         )
 
         if (user) {
             throw new HttpException(
                 'User with such email already exists',
-                HttpStatus.BAD_REQUEST,
+                HttpStatus.BAD_REQUEST
             )
         }
 
-        const salt = await bcrypt.genSalt(6)
-
-        const password = await bcrypt.hash(registerDto.password, salt)
-
         const hash = randomBytes(32).toString('hex')
 
-        return this.userService.create({ ...registerDto, password, hash })
+        return this.userService.create({ ...registerDto, hash })
     }
 
     async login(loginDto: LoginDto) {

@@ -8,6 +8,7 @@ import { MessageController } from './message.controller'
 
 @Module({
     imports: [TypeOrmModule.forFeature([Message]), UserModule, ChatModule],
+    exports: [MessageService],
     controllers: [MessageController],
     providers: [MessageService],
 })
