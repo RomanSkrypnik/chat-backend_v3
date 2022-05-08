@@ -12,7 +12,7 @@ export class MessageService {
         @InjectRepository(Message)
         private messageRepository: Repository<Message>,
         private chatService: ChatService,
-        private userService: UserService,
+        private userService: UserService
     ) {}
 
     async create(messageDto: CreateMessageDto, userId: number) {
@@ -24,24 +24,15 @@ export class MessageService {
 
         const { id } = await this.chatService.getOrCreate(userId, user.id)
 
-        return await this.messageRepository.save({
+        const chat = await this.messageRepository.save({
             text: messageDto.message.text,
             chatId: id,
             userId,
         })
-    }
 
-    convertTwoDimArr(messages: Message[]) {
-        const arr = []
-        let i = 0
-
-        messages.forEach((message, idx) => {
-            if (idx > 0 && message.user.id !== messages[idx - 1].user.id) {
-                i++
-            }
-            arr[i] = arr[i] ? [...arr[i], message] : [message]
+        return await this.messageRepository.findOne({
+            where: { id: chat.id },
+            relations: ['user'],
         })
-
-        return arr
     }
 }

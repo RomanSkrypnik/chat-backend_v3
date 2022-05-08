@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Chat } from './chat.entity'
-import { Repository } from 'typeorm'
+import { ILike, Repository } from 'typeorm'
 import { UserService } from '../user/user.service'
 import { MessageService } from '../message/message.service'
 
@@ -21,24 +21,15 @@ export class ChatService {
     ) {}
 
     async getChats(userId: number) {
-        const currUser = await this.userService.getByColumn(userId, 'id')
+        const user = await this.userService.getByColumn(userId, 'id')
 
-        if (!currUser) {
+        if (!user) {
             throw new HttpException('User is not found', HttpStatus.BAD_REQUEST)
         }
 
         const chats = await this._getAll(userId)
 
-        return chats.map((chat) => {
-            const messages = this.messageService.convertTwoDimArr(chat.messages)
-
-            const user = chat.user1.id === currUser.id ? chat.user2 : chat.user1
-
-            delete chat.user1
-            delete chat.user2
-
-            return { ...chat, messages, user }
-        })
+        return this._getFormattedChats(chats, userId)
     }
 
     async getChat(user1Id: number, userHash: string) {
@@ -54,12 +45,10 @@ export class ChatService {
             return { messages: [], user }
         }
 
-        const messages = this.messageService.convertTwoDimArr(chat.messages)
-
         delete chat.user1
         delete chat.user2
 
-        return { ...chat, messages, user }
+        return { ...chat, user }
     }
 
     async getOrCreate(user1Id: number, user2Id: number): Promise<Chat> {
@@ -74,6 +63,21 @@ export class ChatService {
         }
 
         return chat
+    }
+
+    async getChatBySearch(userId: number, search: string): Promise<Chat[]> {
+        const column = search.startsWith('@') ? 'username' : 'name'
+
+        const chats = await this.chatRepository.find({
+            where: [
+                { user1: { [column]: ILike(`%${search}%`) } },
+                { user2: { [column]: ILike(`%${search}%`) } },
+            ],
+            select: ['id'],
+            relations: ['user1', 'user2', 'messages', 'messages.user'],
+        })
+
+        return this._getFormattedChats(chats, userId)
     }
 
     async _getAll(userId: number): Promise<Chat[]> {
@@ -91,6 +95,17 @@ export class ChatService {
             where: condition,
             select: ['id'],
             relations: ['user1', 'user2', 'messages', 'messages.user'],
+        })
+    }
+
+    _getFormattedChats(chats: Chat[], userId: number) {
+        return chats.map((chat) => {
+            const user = chat.user1.id === userId ? chat.user2 : chat.user1
+
+            delete chat.user1
+            delete chat.user2
+
+            return { ...chat, user }
         })
     }
 
