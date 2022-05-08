@@ -12,7 +12,6 @@ import { ChatService } from './chat.service'
 import { AtGuard } from '../auth/guards/at.guard'
 import { User } from '../user/decorators/user.decorator'
 import { Request, Response } from 'express'
-import { ChatSearchDto } from './dtos'
 
 @Controller('chat')
 export class ChatController {
@@ -38,7 +37,7 @@ export class ChatController {
     @UseGuards(AtGuard)
     async search(
         @User('id') userId,
-        @Body() body: ChatSearchDto,
+        @Body() body: { search: string },
         @Res() res: Response
     ) {
         const data = await this.chatService.getChatBySearch(userId, body.search)

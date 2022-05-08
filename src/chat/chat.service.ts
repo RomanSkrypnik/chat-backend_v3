@@ -70,8 +70,8 @@ export class ChatService {
 
         const chats = await this.chatRepository.find({
             where: [
-                { user1: { [column]: ILike(`%${search}%`) } },
-                { user2: { [column]: ILike(`%${search}%`) } },
+                { user1: { [column]: ILike(`${search}%`) } },
+                { user2: { [column]: ILike(`${search}%`) } },
             ],
             select: ['id'],
             relations: ['user1', 'user2', 'messages', 'messages.user'],
