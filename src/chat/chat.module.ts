@@ -5,6 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm'
 import { Chat } from './chat.entity'
 import { ChatController } from './chat.controller'
 import MessageModule from '../message/message.module'
+import { ChatGateway } from './chat.gateway'
 
 @Module({
     imports: [
@@ -12,8 +13,8 @@ import MessageModule from '../message/message.module'
         UserModule,
         forwardRef(() => MessageModule),
     ],
+    exports: [ChatService, ChatGateway],
     controllers: [ChatController],
-    exports: [ChatService],
-    providers: [ChatService],
+    providers: [ChatService, ChatGateway],
 })
 export default class ChatModule {}
