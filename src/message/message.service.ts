@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common'
 import { UserService } from '../user/user.service'
-import { ChatService } from '../chat/chat.service'
+import { ChatService } from '../chat/services/chat.service'
 import { CreateMessageDto } from './dtos/create.dto'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Message } from './message.entity'
@@ -15,7 +15,10 @@ export class MessageService {
         private userService: UserService
     ) {}
 
-    async create(messageDto: CreateMessageDto, userId: number) {
+    async create(
+        messageDto: CreateMessageDto,
+        userId: number
+    ): Promise<Message> {
         const user = await this.userService.getByColumn(messageDto.hash, 'hash')
 
         if (!user) {

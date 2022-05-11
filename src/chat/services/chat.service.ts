@@ -6,10 +6,10 @@ import {
     Injectable,
 } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { Chat } from './chat.entity'
+import { Chat } from '../chat.entity'
 import { ILike, Repository } from 'typeorm'
-import { UserService } from '../user/user.service'
-import { MessageService } from '../message/message.service'
+import { UserService } from '../../user/user.service'
+import { MessageService } from '../../message/message.service'
 
 @Injectable()
 export class ChatService {

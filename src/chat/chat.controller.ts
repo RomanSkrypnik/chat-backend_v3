@@ -8,7 +8,7 @@ import {
     Res,
     UseGuards,
 } from '@nestjs/common'
-import { ChatService } from './chat.service'
+import { ChatService } from './services/chat.service'
 import { AtGuard } from '../auth/guards/at.guard'
 import { User } from '../user/decorators/user.decorator'
 import { Request, Response } from 'express'
