@@ -8,13 +8,14 @@ import {
     WebSocketServer,
 } from '@nestjs/websockets'
 import { MessageService } from '../message/message.service'
-import { CreateMessageDto } from '../message/dtos/create.dto'
-import { UseGuards } from '@nestjs/common'
+import { HttpException, HttpStatus } from '@nestjs/common'
 import { Server } from 'socket.io'
 import { SocketDto } from './dtos'
 import { SocketService } from './services/socket.service'
 import * as jwt from 'jsonwebtoken'
 import { UserDto } from '../user/dtos'
+import { UserService } from '../user/user.service'
+import { MessageDto } from '../message/dtos/message.dto'
 
 @WebSocketGateway({ cors: true })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -23,7 +24,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     constructor(
         private messageService: MessageService,
-        private socketService: SocketService
+        private socketService: SocketService,
+        private userService: UserService
     ) {}
 
     async handleConnection(client: SocketDto, ...args: any[]) {
@@ -32,9 +34,19 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
             const decoded = jwt.verify(
                 bearerToken,
                 process.env.JWT_ACCESS_SECRET
-            )
+            ) as UserDto
 
-            client.user = decoded as UserDto
+            const user = await this.userService.getByColumn(decoded.id, 'id')
+
+            if (!user) {
+                throw new HttpException(
+                    'User not found',
+                    HttpStatus.BAD_REQUEST
+                )
+            }
+
+            client.user = decoded
+
             console.log('connection')
         } catch (ex) {
             client.disconnect()
@@ -48,18 +60,16 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @SubscribeMessage('send-message')
     async handleMessage(
         @ConnectedSocket() client: SocketDto,
-        @MessageBody() message: CreateMessageDto
+        @MessageBody() { message, hash }: { message: MessageDto; hash: string }
     ) {
-        const data = await this.messageService.create(message, client.user.id)
-
         const sockets = (await this.server.fetchSockets()) as SocketDto[]
 
-        const companionSocket = this.socketService.getOne(sockets, message.hash)
+        const companionSocket = this.socketService.getOne(sockets, hash)
 
-        client.emit('chat-message', data)
+        client.emit('chat-message', message)
 
         if (companionSocket) {
-            this.server.to(companionSocket.id).emit('chat-message', data)
+            this.server.to(companionSocket.id).emit('chat-message', message)
         }
     }
 }

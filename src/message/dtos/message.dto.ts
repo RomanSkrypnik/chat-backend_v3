@@ -5,7 +5,9 @@ export class MessageDto {
 
     text: string
 
-    file: null
+    createdAt: string
+
+    files: [] | File[]
 
     user: UserDto
 }

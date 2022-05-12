@@ -74,7 +74,7 @@ export class ChatService {
                 { user2: { [column]: ILike(`${search}%`) } },
             ],
             select: ['id'],
-            relations: ['user1', 'user2', 'messages', 'messages.user'],
+            relations: ['files', 'user1', 'user2', 'messages', 'messages.user'],
         })
 
         return this._getFormattedChats(chats, userId)
@@ -84,7 +84,13 @@ export class ChatService {
         return await this.chatRepository.find({
             where: [{ user1Id: userId }, { user2Id: userId }],
             select: ['id'],
-            relations: ['user1', 'user2', 'messages', 'messages.user'],
+            relations: [
+                'user1',
+                'user2',
+                'messages',
+                'messages.user',
+                'messages.files',
+            ],
         })
     }
 
@@ -94,7 +100,13 @@ export class ChatService {
         return await this.chatRepository.findOne({
             where: condition,
             select: ['id'],
-            relations: ['user1', 'user2', 'messages', 'messages.user'],
+            relations: [
+                'user1',
+                'user2',
+                'messages',
+                'messages.user',
+                'messages.files',
+            ],
         })
     }
 

@@ -16,10 +16,10 @@ export class MessageService {
     ) {}
 
     async create(
-        messageDto: CreateMessageDto,
+        { hash, text }: CreateMessageDto,
         userId: number
     ): Promise<Message> {
-        const user = await this.userService.getByColumn(messageDto.hash, 'hash')
+        const user = await this.userService.getByColumn(hash, 'hash')
 
         if (!user) {
             throw new HttpException('User not found', HttpStatus.BAD_REQUEST)
@@ -27,15 +27,18 @@ export class MessageService {
 
         const { id } = await this.chatService.getOrCreate(userId, user.id)
 
-        const chat = await this.messageRepository.save({
-            text: messageDto.message.text,
+        return await this.messageRepository.save({
+            text,
             chatId: id,
             userId,
         })
+    }
 
+    async getByColumn(item: any, column: string) {
         return await this.messageRepository.findOne({
-            where: { id: chat.id },
-            relations: ['user'],
+            select: ['id', 'text', 'createdAt', 'files', 'user'],
+            where: { [column]: item },
+            relations: ['user', 'files'],
         })
     }
 }

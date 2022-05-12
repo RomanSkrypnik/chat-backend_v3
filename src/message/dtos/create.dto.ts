@@ -1,10 +1,11 @@
 import { IsNotEmpty } from 'class-validator'
-import { MessageDto } from './message.dto'
 
 export class CreateMessageDto {
     @IsNotEmpty()
-    message: MessageDto
+    text: string
 
     @IsNotEmpty()
     hash: string
+
+    files: Array<Express.Multer.File>
 }
