@@ -34,9 +34,19 @@ export class MessageService {
         })
     }
 
-    async getByColumn(item: any, column: string) {
+    async get(chatId: number, skip: number, take: number): Promise<Message[]> {
+        return await this.messageRepository.find({
+            select: ['id', 'text', 'createdAt', 'chatId'],
+            relations: ['user', 'files'],
+            where: { chatId },
+            skip,
+            take,
+        })
+    }
+
+    async getByColumn(item: any, column: string): Promise<Message> {
         return await this.messageRepository.findOne({
-            select: ['id', 'text', 'createdAt', 'files', 'user'],
+            select: ['id', 'text', 'createdAt', 'files', 'user', 'chatId'],
             where: { [column]: item },
             relations: ['user', 'files'],
         })

@@ -7,10 +7,11 @@ import { ChatController } from './chat.controller'
 import MessageModule from '../message/message.module'
 import { ChatGateway } from './chat.gateway'
 import { SocketService } from './services/socket.service'
+import { Message } from '../message/message.entity'
 
 @Module({
     imports: [
-        TypeOrmModule.forFeature([Chat]),
+        TypeOrmModule.forFeature([Chat, Message]),
         UserModule,
         forwardRef(() => MessageModule),
     ],

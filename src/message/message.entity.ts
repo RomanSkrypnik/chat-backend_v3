@@ -16,7 +16,7 @@ export class Message {
     @PrimaryGeneratedColumn()
     id: number
 
-    @Column({ nullable: false })
+    @Column()
     text: string
 
     @Column({ select: false })
