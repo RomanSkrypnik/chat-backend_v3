@@ -7,11 +7,10 @@ import {
 } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Chat } from '../chat.entity'
-import { getManager, ILike, Repository } from 'typeorm'
+import { ILike, Repository } from 'typeorm'
 import { UserService } from '../../user/user.service'
 import { MessageService } from '../../message/message.service'
 import { Message } from '../../message/message.entity'
-import { ChatDto } from '../dtos/chat.dto'
 
 @Injectable()
 export class ChatService {
@@ -31,7 +30,7 @@ export class ChatService {
             throw new HttpException('User is not found', HttpStatus.BAD_REQUEST)
         }
 
-        const chats = await this._getAll(userId)
+        const chats = await this.getAll(userId)
 
         return this._getFormattedChats(chats, userId)
     }
@@ -43,7 +42,7 @@ export class ChatService {
             throw new HttpException('User not found', HttpStatus.BAD_REQUEST)
         }
 
-        const { user1, user2, ...chat } = await this._getOne(userId, user.id)
+        const { user1, user2, ...chat } = await this.getOne(userId, user.id)
         const messages = await this.messageService.get(chat.id, 0, 40)
 
         if (!chat) {
@@ -51,6 +50,22 @@ export class ChatService {
         }
 
         return { ...chat, user, messages }
+    }
+
+    async getOne(user1Id: number, user2Id: number): Promise<Chat> {
+        const condition = this._getCondition(user1Id, user2Id)
+
+        return await this.chatRepository.findOne({
+            where: condition,
+            relations: ['user1', 'user2'],
+        })
+    }
+
+    async getByColumn(item: string | number, column: string) {
+        return await this.chatRepository.findOne({
+            [column]: item,
+            relations: ['user1', 'user2'],
+        })
     }
 
     async getOrCreate(user1Id: number, user2Id: number): Promise<Chat> {
@@ -82,18 +97,9 @@ export class ChatService {
         return this._getFormattedChats(chats, userId)
     }
 
-    async _getAll(userId: number): Promise<Chat[]> {
+    async getAll(userId: number): Promise<Chat[]> {
         return await this.chatRepository.find({
             where: [{ user1Id: userId }, { user2Id: userId }],
-            relations: ['user1', 'user2'],
-        })
-    }
-
-    async _getOne(user1Id: number, user2Id: number): Promise<Chat> {
-        const condition = this._getCondition(user1Id, user2Id)
-
-        return await this.chatRepository.findOne({
-            where: condition,
             relations: ['user1', 'user2'],
         })
     }

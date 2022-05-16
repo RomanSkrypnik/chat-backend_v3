@@ -16,8 +16,11 @@ export class Message {
     @PrimaryGeneratedColumn()
     id: number
 
-    @Column()
+    @Column({ type: 'text' })
     text: string
+
+    @Column({ default: false })
+    isRead: boolean
 
     @Column({ select: false })
     userId: number

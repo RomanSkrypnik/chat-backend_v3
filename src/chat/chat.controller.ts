@@ -29,7 +29,6 @@ export class ChatController {
     async chat(@User('id') userId, @Req() req: Request, @Res() res: Response) {
         const { hash } = req.params
         const data = await this.chatService.getChat(userId, hash)
-
         res.status(HttpStatus.OK).json({ data })
     }
 

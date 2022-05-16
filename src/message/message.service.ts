@@ -15,6 +15,40 @@ export class MessageService {
         private userService: UserService
     ) {}
 
+    async read(id: number, userId: number) {
+        const message = await this.getByColumn(id, 'id')
+
+        if (!message) {
+            throw new HttpException('Message not found', HttpStatus.BAD_REQUEST)
+        }
+
+        if (message.userId === userId) {
+            throw new HttpException(
+                'Sender cannot read its own message',
+                HttpStatus.BAD_REQUEST
+            )
+        }
+
+        const { user1, user2 } = await this.chatService.getByColumn(
+            message.chatId,
+            'id'
+        )
+
+        if (user1.id === userId || user2.id === userId) {
+            await this.messageRepository.save({
+                id,
+                isRead: true,
+            })
+
+            return { ...message, isRead: true }
+        }
+
+        throw new HttpException(
+            'You cannot read this message',
+            HttpStatus.BAD_REQUEST
+        )
+    }
+
     async create(
         { hash, text }: CreateMessageDto,
         userId: number
@@ -36,7 +70,7 @@ export class MessageService {
 
     async get(chatId: number, skip: number, take: number): Promise<Message[]> {
         return await this.messageRepository.find({
-            select: ['id', 'text', 'createdAt', 'chatId'],
+            select: ['id', 'text', 'createdAt', 'chatId', 'isRead'],
             relations: ['user', 'files'],
             where: { chatId },
             skip,
@@ -44,9 +78,17 @@ export class MessageService {
         })
     }
 
-    async getByColumn(item: any, column: string): Promise<Message> {
+    async getByColumn(item: string | number, column: string): Promise<Message> {
         return await this.messageRepository.findOne({
-            select: ['id', 'text', 'createdAt', 'files', 'user', 'chatId'],
+            select: [
+                'id',
+                'text',
+                'createdAt',
+                'files',
+                'user',
+                'chatId',
+                'isRead',
+            ],
             where: { [column]: item },
             relations: ['user', 'files'],
         })

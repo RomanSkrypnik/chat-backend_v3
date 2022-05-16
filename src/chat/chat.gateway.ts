@@ -10,12 +10,11 @@ import {
 import { MessageService } from '../message/message.service'
 import { HttpException, HttpStatus } from '@nestjs/common'
 import { Server } from 'socket.io'
-import { SocketDto } from './dtos'
+import { SocketDto, SocketReadMessage, SocketSendMessage } from './dtos'
 import { SocketService } from './services/socket.service'
 import * as jwt from 'jsonwebtoken'
 import { UserDto } from '../user/dtos'
 import { UserService } from '../user/user.service'
-import { MessageDto } from '../message/dtos/message.dto'
 
 @WebSocketGateway({ cors: true })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -58,9 +57,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
 
     @SubscribeMessage('send-message')
-    async handleMessage(
+    async handleSendMessage(
         @ConnectedSocket() client: SocketDto,
-        @MessageBody() { message, hash }: { message: MessageDto; hash: string }
+        @MessageBody() { message, hash }: SocketSendMessage
     ) {
         const sockets = (await this.server.fetchSockets()) as SocketDto[]
 
@@ -70,6 +69,27 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
         if (companionSocket) {
             this.server.to(companionSocket.id).emit('chat-message', message)
+        }
+    }
+
+    @SubscribeMessage('read-message')
+    async handleReadMessage(
+        @ConnectedSocket() client: SocketDto,
+        @MessageBody() { userId, messageId }: SocketReadMessage
+    ) {
+        const message = await this.messageService.read(messageId, userId)
+
+        const sockets = (await this.server.fetchSockets()) as SocketDto[]
+
+        const companionSocket = this.socketService.getOne(
+            sockets,
+            message.user.hash
+        )
+
+        client.emit('read-message', message)
+
+        if (companionSocket) {
+            this.server.to(companionSocket.id).emit('read-message', message)
         }
     }
 }

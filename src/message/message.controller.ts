@@ -28,6 +28,18 @@ export class MessageController {
         private fileService: FileService
     ) {}
 
+    @Get('read/:id')
+    @UseGuards(AtGuard)
+    async read(
+        @User('id') userId: number,
+        @Req() req: Request,
+        @Res() res: Response
+    ) {
+        const { id } = req.params
+        const data = await this.messageService.read(+id, userId)
+        res.status(HttpStatus.OK).json({ data })
+    }
+
     @Get(':id')
     @UseGuards(AtGuard)
     async messages(
