@@ -58,6 +58,8 @@ export class AuthService {
 
         delete user.password
 
+        await this.userRepository.update(user.id, { online: true })
+
         return { tokens, user }
     }
 }

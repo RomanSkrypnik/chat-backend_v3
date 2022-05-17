@@ -1,6 +1,6 @@
 import {
     BeforeInsert,
-    Column,
+    Column, CreateDateColumn,
     Entity,
     OneToMany,
     PrimaryGeneratedColumn,
@@ -37,6 +37,9 @@ export class User {
 
     @Column({ default: false })
     online: boolean
+
+    @CreateDateColumn()
+    lastSeen: Date
 
     @OneToMany(() => Message, (message) => message.user)
     messages: Message[]

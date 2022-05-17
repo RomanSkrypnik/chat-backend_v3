@@ -11,16 +11,17 @@ import {
 import { AuthService } from './auth.service'
 import { RegisterDto, LoginDto } from './dtos/'
 import { Request, Response } from 'express'
-import { AuthGuard } from '@nestjs/passport'
 import { TokenService } from '../token/token.service'
-import { User } from '../user/user.entity'
 import { RtGuard } from './guards/rt.guard'
 import { AtGuard } from './guards/at.guard'
+import { UserService } from '../user/user.service'
+import { UserDto } from '../user/dtos'
 
 @Controller('auth')
 export class AuthController {
     constructor(
         private authService: AuthService,
+        private userService: UserService,
         private tokenService: TokenService
     ) {}
 
@@ -48,8 +49,11 @@ export class AuthController {
     @Get('refresh')
     @UseGuards(RtGuard)
     async refresh(@Req() req: Request, @Res() res: Response) {
-        const user = req.user
-        const tokens = await this.tokenService.generateTokens(user as User)
+        const user = req.user as UserDto
+
+        const tokens = await this.tokenService.generateTokens(user)
+
+        await this.userService.update(user.id, { online: true })
 
         res.cookie('refreshToken', tokens.refreshToken)
         res.status(HttpStatus.OK).json({ data: { user, tokens } })

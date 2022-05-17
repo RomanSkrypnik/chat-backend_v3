@@ -24,15 +24,16 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     constructor(
         private messageService: MessageService,
         private socketService: SocketService,
-        private userService: UserService
-    ) {}
+        private userService: UserService,
+    ) {
+    }
 
     async handleConnection(client: SocketDto, ...args: any[]) {
         const bearerToken = client.handshake.headers.authorization.split(' ')[1]
         try {
             const decoded = jwt.verify(
                 bearerToken,
-                process.env.JWT_ACCESS_SECRET
+                process.env.JWT_ACCESS_SECRET,
             ) as UserDto
 
             const user = await this.userService.getByColumn(decoded.id, 'id')
@@ -40,12 +41,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
             if (!user) {
                 throw new HttpException(
                     'User not found',
-                    HttpStatus.BAD_REQUEST
+                    HttpStatus.BAD_REQUEST,
                 )
             }
 
             client.user = decoded
 
+            await this.broadcast('login', user, client)
             console.log('connection')
         } catch (ex) {
             client.disconnect()
@@ -53,13 +55,34 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
 
     async handleDisconnect(client: SocketDto) {
+        const lastSeen = new Date()
+
+        await this.userService.update(client.user.id, {
+            lastSeen,
+            online: false,
+        })
+
+        await this.broadcast(
+            'logout',
+            { ...client.user, lastSeen, online: false },
+            client
+        )
+
         console.log('disconnect')
+    }
+
+    private async broadcast(event, message: any, client: SocketDto) {
+        for (const socket of await this.server.fetchSockets()) {
+            if (socket.id !== client.id) {
+                socket.emit(event, message)
+            }
+        }
     }
 
     @SubscribeMessage('send-message')
     async handleSendMessage(
         @ConnectedSocket() client: SocketDto,
-        @MessageBody() { message, hash }: SocketSendMessage
+        @MessageBody() { message, hash }: SocketSendMessage,
     ) {
         const sockets = (await this.server.fetchSockets()) as SocketDto[]
 
@@ -75,7 +98,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @SubscribeMessage('read-message')
     async handleReadMessage(
         @ConnectedSocket() client: SocketDto,
-        @MessageBody() { userId, messageId }: SocketReadMessage
+        @MessageBody() { userId, messageId }: SocketReadMessage,
     ) {
         const message = await this.messageService.read(messageId, userId)
 
@@ -83,7 +106,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
         const companionSocket = this.socketService.getOne(
             sockets,
-            message.user.hash
+            message.user.hash,
         )
 
         client.emit('read-message', message)

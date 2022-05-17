@@ -26,4 +26,8 @@ export class UserService {
         const entity = Object.assign(new User(), createUserDto)
         return await this.userRepository.save(entity)
     }
+
+    async update(id: number, fields: Partial<User>) {
+        return await this.userRepository.update(id, fields)
+    }
 }
