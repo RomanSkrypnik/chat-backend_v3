@@ -56,6 +56,8 @@ export class AuthController {
         await this.userService.update(user.id, { online: true })
 
         res.cookie('refreshToken', tokens.refreshToken)
-        res.status(HttpStatus.OK).json({ data: { user, tokens } })
+        res.status(HttpStatus.OK).json({
+            data: { user: { ...user, online: true }, tokens },
+        })
     }
 }
