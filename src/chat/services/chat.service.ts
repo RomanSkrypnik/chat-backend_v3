@@ -130,6 +130,7 @@ export class ChatService {
 
                 return {
                     ...chat,
+                    id,
                     messages,
                     user,
                     isBlockedByMe,
