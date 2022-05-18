@@ -8,12 +8,14 @@ import MessageModule from '../message/message.module'
 import { ChatGateway } from './chat.gateway'
 import { SocketService } from './services/socket.service'
 import { Message } from '../message/message.entity'
+import BlockedModule from '../blocked/blocked.module'
 
 @Module({
     imports: [
         TypeOrmModule.forFeature([Chat, Message]),
-        UserModule,
         forwardRef(() => MessageModule),
+        forwardRef(() => BlockedModule),
+        UserModule,
     ],
     exports: [ChatService, ChatGateway],
     controllers: [ChatController],

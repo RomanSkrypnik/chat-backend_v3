@@ -15,6 +15,7 @@ import { SocketService } from './services/socket.service'
 import * as jwt from 'jsonwebtoken'
 import { UserDto } from '../user/dtos'
 import { UserService } from '../user/user.service'
+import { BlockedService } from '../blocked/blocked.service'
 
 @WebSocketGateway({ cors: true })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -25,15 +26,15 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         private messageService: MessageService,
         private socketService: SocketService,
         private userService: UserService,
-    ) {
-    }
+        private blockedService: BlockedService
+    ) {}
 
     async handleConnection(client: SocketDto, ...args: any[]) {
         const bearerToken = client.handshake.headers.authorization.split(' ')[1]
         try {
             const decoded = jwt.verify(
                 bearerToken,
-                process.env.JWT_ACCESS_SECRET,
+                process.env.JWT_ACCESS_SECRET
             ) as UserDto
 
             const user = await this.userService.getByColumn(decoded.id, 'id')
@@ -41,13 +42,15 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
             if (!user) {
                 throw new HttpException(
                     'User not found',
-                    HttpStatus.BAD_REQUEST,
+                    HttpStatus.BAD_REQUEST
                 )
             }
 
             client.user = decoded
 
-            await this.broadcast('login', user, client)
+            const sockets = (await this.server.fetchSockets()) as SocketDto[]
+            this.socketService.broadcast(sockets, 'login', user, client)
+
             console.log('connection')
         } catch (ex) {
             client.disconnect()
@@ -62,27 +65,18 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
             online: false,
         })
 
-        await this.broadcast(
-            'logout',
-            { ...client.user, lastSeen, online: false },
-            client
-        )
+        const sockets = (await this.server.fetchSockets()) as SocketDto[]
+        const user = { ...client.user, lastSeen, online: false }
+
+        this.socketService.broadcast(sockets, 'logout', user, client)
 
         console.log('disconnect')
-    }
-
-    private async broadcast(event, message: any, client: SocketDto) {
-        for (const socket of await this.server.fetchSockets()) {
-            if (socket.id !== client.id) {
-                socket.emit(event, message)
-            }
-        }
     }
 
     @SubscribeMessage('send-message')
     async handleSendMessage(
         @ConnectedSocket() client: SocketDto,
-        @MessageBody() { message, hash }: SocketSendMessage,
+        @MessageBody() { message, hash }: SocketSendMessage
     ) {
         const sockets = (await this.server.fetchSockets()) as SocketDto[]
 
@@ -98,7 +92,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @SubscribeMessage('read-message')
     async handleReadMessage(
         @ConnectedSocket() client: SocketDto,
-        @MessageBody() { userId, messageId }: SocketReadMessage,
+        @MessageBody() { userId, messageId }: SocketReadMessage
     ) {
         const message = await this.messageService.read(messageId, userId)
 
@@ -106,13 +100,37 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
         const companionSocket = this.socketService.getOne(
             sockets,
-            message.user.hash,
+            message.user.hash
         )
 
         client.emit('read-message', message)
 
         if (companionSocket) {
             this.server.to(companionSocket.id).emit('read-message', message)
+        }
+    }
+
+    @SubscribeMessage('block-unblock')
+    async handleBlock(
+        @ConnectedSocket() client: SocketDto,
+        @MessageBody() blockedId: number
+    ) {
+        const chat = await this.blockedService.createOrDelete(
+            client.user.id,
+            blockedId
+        )
+
+        const sockets = (await this.server.fetchSockets()) as SocketDto[]
+
+        const companionSocket = this.socketService.getOne(
+            sockets,
+            chat.user.hash
+        )
+
+        client.emit('block-unblock', chat)
+
+        if (companionSocket) {
+            this.server.to(companionSocket.id).emit('block-unblock', chat)
         }
     }
 }

@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common'
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common'
 import { RegisterDto, LoginDto } from './dtos'
 import * as bcrypt from 'bcrypt'
 import { TokenService } from '../token/token.service'
@@ -60,6 +60,6 @@ export class AuthService {
 
         await this.userRepository.update(user.id, { online: true })
 
-        return { tokens, user }
+        return { tokens, user: { ...user, online: true } }
     }
 }

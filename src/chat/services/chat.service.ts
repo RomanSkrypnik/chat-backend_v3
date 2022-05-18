@@ -11,6 +11,7 @@ import { ILike, Repository } from 'typeorm'
 import { UserService } from '../../user/user.service'
 import { MessageService } from '../../message/message.service'
 import { Message } from '../../message/message.entity'
+import { BlockedService } from '../../blocked/blocked.service'
 
 @Injectable()
 export class ChatService {
@@ -20,6 +21,8 @@ export class ChatService {
         private messageRepository: Repository<Message>,
         @Inject(forwardRef(() => MessageService))
         private messageService: MessageService,
+        @Inject(forwardRef(() => BlockedService))
+        private blockedService: BlockedService,
         private userService: UserService
     ) {}
 
@@ -32,7 +35,7 @@ export class ChatService {
 
         const chats = await this.getAll(userId)
 
-        return this._getFormattedChats(chats, userId)
+        return this.getFormattedChats(chats, userId)
     }
 
     async getChat(userId: number, userHash: string) {
@@ -43,17 +46,26 @@ export class ChatService {
         }
 
         const { user1, user2, ...chat } = await this.getOne(userId, user.id)
+
         const messages = await this.messageService.get(chat.id, 0, 40)
+        const isBlockedByMe = !!(await this.blockedService.getOne(
+            chat.id,
+            userId
+        ))
+        const isBlockedMyCompanion = !!(await this.blockedService.getOne(
+            chat.id,
+            user.id
+        ))
 
         if (!chat) {
             return { messages: [], user }
         }
 
-        return { ...chat, user, messages }
+        return { ...chat, user, messages, isBlockedByMe, isBlockedMyCompanion }
     }
 
     async getOne(user1Id: number, user2Id: number): Promise<Chat> {
-        const condition = this._getCondition(user1Id, user2Id)
+        const condition = this.getCondition(user1Id, user2Id)
 
         return await this.chatRepository.findOne({
             where: condition,
@@ -69,7 +81,7 @@ export class ChatService {
     }
 
     async getOrCreate(user1Id: number, user2Id: number): Promise<Chat> {
-        const condition = this._getCondition(user1Id, user2Id)
+        const condition = this.getCondition(user1Id, user2Id)
 
         let chat = await this.chatRepository.findOne({
             where: condition,
@@ -94,7 +106,7 @@ export class ChatService {
             relations: ['user1', 'user2'],
         })
 
-        return this._getFormattedChats(chats, userId)
+        return this.getFormattedChats(chats, userId)
     }
 
     async getAll(userId: number): Promise<Chat[]> {
@@ -104,17 +116,30 @@ export class ChatService {
         })
     }
 
-    _getFormattedChats(chats: Chat[], userId: number) {
+    private getFormattedChats(chats: Chat[], userId: number) {
         return Promise.all(
-            chats.map(async ({ user1, user2, ...chat }) => {
-                const messages = await this.messageService.get(chat.id, 0, 40)
+            chats.map(async ({ user1, user2, id, ...chat }) => {
+                const messages = await this.messageService.get(id, 0, 40)
                 const user = user1.id === userId ? user2 : user1
-                return { ...chat, messages, user }
+                const isBlockedByMe = !!(await this.blockedService.getOne(
+                    id,
+                    userId
+                ))
+                const isBlockedByCompanion =
+                    !!(await this.blockedService.getOne(id, user.id))
+
+                return {
+                    ...chat,
+                    messages,
+                    user,
+                    isBlockedByMe,
+                    isBlockedByCompanion,
+                }
             })
         )
     }
 
-    _getCondition(user1Id: number, user2Id: number) {
+    private getCondition(user1Id: number, user2Id: number) {
         return [
             { user1Id, user2Id },
             { user1Id: user2Id, user2Id: user1Id },
