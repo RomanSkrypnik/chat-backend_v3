@@ -5,7 +5,6 @@ import { BlockedService } from './blocked.service'
 import { UserModule } from '../user/user.module'
 import { Blocked } from './blocked.entity'
 import ChatModule from '../chat/chat.module'
-import { BlockedController } from './blocked.controller'
 
 @Module({
     imports: [
@@ -14,7 +13,6 @@ import { BlockedController } from './blocked.controller'
         forwardRef(() => ChatModule),
     ],
     exports: [BlockedService],
-    controllers: [BlockedController],
     providers: [BlockedService],
 })
 export default class BlockedModule {}

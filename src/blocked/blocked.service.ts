@@ -21,7 +21,7 @@ export class BlockedService {
         private chatService: ChatService
     ) {}
 
-    async createOrDelete(blockerId: number, blockedId) {
+    async createOrDelete(blockerId: number, blockedId: number) {
         const user = await this.userService.getByColumn(blockedId, 'id')
 
         if (!user) {

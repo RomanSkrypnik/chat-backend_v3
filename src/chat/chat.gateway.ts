@@ -16,6 +16,7 @@ import * as jwt from 'jsonwebtoken'
 import { UserDto } from '../user/dtos'
 import { UserService } from '../user/user.service'
 import { BlockedService } from '../blocked/blocked.service'
+import { MutedService } from '../muted/muted.service'
 
 @WebSocketGateway({ cors: true })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -26,7 +27,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         private messageService: MessageService,
         private socketService: SocketService,
         private userService: UserService,
-        private blockedService: BlockedService
+        private blockedService: BlockedService,
+        private mutedService: MutedService
     ) {}
 
     async handleConnection(client: SocketDto, ...args: any[]) {
@@ -111,7 +113,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
 
     @SubscribeMessage('block-unblock')
-    async handleBlock(
+    async handleBlockUnblock(
         @ConnectedSocket() client: SocketDto,
         @MessageBody() blockedId: number
     ) {
@@ -131,6 +133,27 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
         if (companionSocket) {
             this.server.to(companionSocket.id).emit('block-unblock', chat)
+        }
+    }
+
+    @SubscribeMessage('mute-unmute')
+    async handleMuteUnmute(
+        @ConnectedSocket() client: SocketDto,
+        @MessageBody() mutedId: number
+    ) {
+        const chat = await this.mutedService.muteUnmute(client.user.id, mutedId)
+
+        const sockets = (await this.server.fetchSockets()) as SocketDto[]
+
+        const companionSocket = this.socketService.getOne(
+            sockets,
+            chat.user.hash
+        )
+
+        client.emit('mute-unmute', chat)
+
+        if (companionSocket) {
+            this.server.to(companionSocket.id).emit('mute-unmute', chat)
         }
     }
 }

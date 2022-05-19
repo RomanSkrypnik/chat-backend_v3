@@ -12,6 +12,7 @@ import { UserService } from '../../user/user.service'
 import { MessageService } from '../../message/message.service'
 import { Message } from '../../message/message.entity'
 import { BlockedService } from '../../blocked/blocked.service'
+import { MutedService } from '../../muted/muted.service'
 
 @Injectable()
 export class ChatService {
@@ -23,6 +24,8 @@ export class ChatService {
         private messageService: MessageService,
         @Inject(forwardRef(() => BlockedService))
         private blockedService: BlockedService,
+        @Inject(forwardRef(() => MutedService))
+        private mutedService: MutedService,
         private userService: UserService
     ) {}
 
@@ -56,12 +59,25 @@ export class ChatService {
             chat.id,
             user.id
         ))
+        const isMutedByMe = !!(await this.mutedService.getOne(chat.id, userId))
+        const isMutedByCompanion = !!(await this.mutedService.getOne(
+            chat.id,
+            user.id
+        ))
 
         if (!chat) {
             return { messages: [], user }
         }
 
-        return { ...chat, user, messages, isBlockedByMe, isBlockedMyCompanion }
+        return {
+            ...chat,
+            user,
+            messages,
+            isBlockedByMe,
+            isBlockedMyCompanion,
+            isMutedByMe,
+            isMutedByCompanion,
+        }
     }
 
     async getOne(user1Id: number, user2Id: number): Promise<Chat> {
@@ -118,23 +134,32 @@ export class ChatService {
 
     private getFormattedChats(chats: Chat[], userId: number) {
         return Promise.all(
-            chats.map(async ({ user1, user2, id, ...chat }) => {
-                const messages = await this.messageService.get(id, 0, 40)
+            chats.map(async ({ user1, user2, ...chat }) => {
+                const messages = await this.messageService.get(chat.id, 0, 40)
                 const user = user1.id === userId ? user2 : user1
                 const isBlockedByMe = !!(await this.blockedService.getOne(
-                    id,
+                    chat.id,
                     userId
                 ))
                 const isBlockedByCompanion =
-                    !!(await this.blockedService.getOne(id, user.id))
+                    !!(await this.blockedService.getOne(chat.id, user.id))
+                const isMutedByMe = !!(await this.mutedService.getOne(
+                    chat.id,
+                    userId
+                ))
+                const isMutedByCompanion = !!(await this.mutedService.getOne(
+                    chat.id,
+                    user.id
+                ))
 
                 return {
                     ...chat,
-                    id,
                     messages,
                     user,
                     isBlockedByMe,
                     isBlockedByCompanion,
+                    isMutedByMe,
+                    isMutedByCompanion,
                 }
             })
         )
