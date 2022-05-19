@@ -132,7 +132,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         client.emit('block-unblock', chat)
 
         if (companionSocket) {
-            this.server.to(companionSocket.id).emit('block-unblock', chat)
+            this.server
+                .to(companionSocket.id)
+                .emit('block-unblock', { ...chat, user: client.user })
         }
     }
 

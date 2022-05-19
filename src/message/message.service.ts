@@ -73,6 +73,9 @@ export class MessageService {
             select: ['id', 'text', 'createdAt', 'chatId', 'isRead'],
             relations: ['user', 'files'],
             where: { chatId },
+            order: {
+                createdAt: 'DESC',
+            },
             skip,
             take,
         })
