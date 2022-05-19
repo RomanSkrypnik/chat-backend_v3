@@ -48,7 +48,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
                 )
             }
 
-            client.user = decoded
+            client.user = { ...decoded, online: true }
 
             const sockets = (await this.server.fetchSockets()) as SocketDto[]
             this.socketService.broadcast(sockets, 'login', user, client)
@@ -153,7 +153,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         client.emit('mute-unmute', chat)
 
         if (companionSocket) {
-            this.server.to(companionSocket.id).emit('mute-unmute', chat)
+            this.server
+                .to(companionSocket.id)
+                .emit('mute-unmute', { ...chat, user: client.user })
         }
     }
 }
