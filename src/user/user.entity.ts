@@ -1,5 +1,5 @@
 import {
-    BeforeInsert,
+    BeforeInsert, BeforeUpdate,
     Column, CreateDateColumn,
     Entity,
     OneToMany,
@@ -20,7 +20,7 @@ export class User {
     @Column()
     name: string
 
-    @Column({ unique: true })
+    @Column()
     email: string
 
     @Column({ select: false })
@@ -48,8 +48,11 @@ export class User {
     chats: Chat[]
 
     @BeforeInsert()
+    @BeforeUpdate()
     async setPassword() {
-        const salt = await bcrypt.genSalt(6)
-        this.password = await bcrypt.hash(this.password, salt)
+        if (this.password) {
+            const salt = await bcrypt.genSalt(6)
+            this.password = await bcrypt.hash(this.password, salt)
+        }
     }
 }

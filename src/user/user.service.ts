@@ -1,13 +1,13 @@
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 import { User } from './user.entity'
-import { Injectable } from '@nestjs/common'
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common'
 import { CreateUserDto } from './dtos'
 
 @Injectable()
 export class UserService {
     constructor(
-        @InjectRepository(User) private userRepository: Repository<User>,
+        @InjectRepository(User) private userRepository: Repository<User>
     ) {}
 
     async getAll(): Promise<User[]> {
@@ -28,6 +28,12 @@ export class UserService {
     }
 
     async update(id: number, fields: Partial<User>) {
-        return await this.userRepository.update(id, fields)
+        const user = await this.userRepository.findOne({ id })
+
+        if (!user) {
+            throw new HttpException('User not found', HttpStatus.BAD_REQUEST)
+        }
+
+        return await this.userRepository.save(Object.assign(user, fields))
     }
 }

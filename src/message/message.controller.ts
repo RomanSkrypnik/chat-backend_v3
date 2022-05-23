@@ -47,10 +47,19 @@ export class MessageController {
         @Req() req: Request,
         @Res() res: Response
     ) {
-        const { skip, take } = query
-        const { id } = req.params
+        let skip = +query.skip
+        const take = +query.take
+        const id = +req.params.id
 
-        const data = await this.messageService.get(+id, +skip, +take)
+        const messages = await this.messageService.get(id, skip, take)
+        let isLoaded = false
+        skip += 40
+
+        if (messages.length < 40) {
+            isLoaded = true
+        }
+
+        const data = { messages, skip, isLoaded }
 
         res.status(HttpStatus.OK).json({ data })
     }
@@ -77,7 +86,6 @@ export class MessageController {
         await this.fileService.createBulk(uploadedFiles, message.id)
 
         const data = await this.messageService.getByColumn(message.id, 'id')
-
         res.status(HttpStatus.OK).json({ data })
     }
 }

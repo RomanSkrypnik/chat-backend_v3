@@ -50,6 +50,10 @@ export class ChatService {
 
         const { user1, user2, ...chat } = await this.getOne(userId, user.id)
 
+        if (!chat) {
+            return { messages: [], user }
+        }
+
         const messages = await this.messageService.get(chat.id, 0, 40)
         const isBlockedByMe = !!(await this.blockedService.getOne(
             chat.id,
@@ -59,15 +63,7 @@ export class ChatService {
             chat.id,
             user.id
         ))
-        const isMutedByMe = !!(await this.mutedService.getOne(chat.id, userId))
-        const isMutedByCompanion = !!(await this.mutedService.getOne(
-            chat.id,
-            user.id
-        ))
-
-        if (!chat) {
-            return { messages: [], user }
-        }
+        const isMuted = !!(await this.mutedService.getOne(chat.id, userId))
 
         return {
             ...chat,
@@ -75,8 +71,9 @@ export class ChatService {
             messages,
             isBlockedByMe,
             isBlockedMyCompanion,
-            isMutedByMe,
-            isMutedByCompanion,
+            isMuted,
+            skip: 40,
+            isLoaded: false,
         }
     }
 
@@ -143,13 +140,9 @@ export class ChatService {
                 ))
                 const isBlockedByCompanion =
                     !!(await this.blockedService.getOne(chat.id, user.id))
-                const isMutedByMe = !!(await this.mutedService.getOne(
+                const isMuted = !!(await this.mutedService.getOne(
                     chat.id,
                     userId
-                ))
-                const isMutedByCompanion = !!(await this.mutedService.getOne(
-                    chat.id,
-                    user.id
                 ))
 
                 return {
@@ -158,8 +151,9 @@ export class ChatService {
                     user,
                     isBlockedByMe,
                     isBlockedByCompanion,
-                    isMutedByMe,
-                    isMutedByCompanion,
+                    isMuted,
+                    skip: 40,
+                    isLoaded: false,
                 }
             })
         )

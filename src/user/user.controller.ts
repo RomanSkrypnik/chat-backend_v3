@@ -11,6 +11,9 @@ import {
 import { AtGuard } from '../auth/guards/at.guard'
 import { Request, Response } from 'express'
 import { UserService } from './user.service'
+import { EditUserDto } from './dtos'
+import { User } from './decorators/user.decorator'
+import * as Http from 'http'
 
 @Controller('user')
 export class UserController {
@@ -38,5 +41,28 @@ export class UserController {
     async search(@Body() body: { search: string }, @Res() res: Response) {
         const data = await this.userService.getBySearch(body.search)
         res.status(HttpStatus.OK).json({ data })
+    }
+
+    @Post('edit')
+    @UseGuards(AtGuard)
+    async edit(
+        @User('id') userId: number,
+        @Body() body: EditUserDto,
+        @Res() res: Response
+    ) {
+        await this.userService.update(userId, body)
+        const data = await this.userService.getByColumn(userId, 'id')
+        res.status(HttpStatus.OK).json({ data })
+    }
+
+    @Post('change-password')
+    @UseGuards(AtGuard)
+    async changePassword(
+        @User('id') userId,
+        @Body() body: { password: string },
+        @Res() res: Response
+    ) {
+        await this.userService.update(userId, body)
+        res.status(HttpStatus.OK).json({ message: 'Password changed' })
     }
 }
