@@ -54,10 +54,13 @@ export class RoomController {
         @Body() body: { name: string },
         @Res() res: Response
     ) {
-        const data = await this.roomService.create(userId, {
+        const { id } = await this.roomService.create(userId, {
             ...body,
             avatar: avatar.filename,
         })
+
+        const data = await this.roomService.getByColumn(id, 'id')
+
         res.status(HttpStatus.OK).json({ data })
     }
 }

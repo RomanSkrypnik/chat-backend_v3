@@ -26,7 +26,7 @@ export class RoomMessage {
     @ManyToOne(() => User, (user) => user.id)
     user: User
 
-    @ManyToOne(() => Room, (room) => room)
+    @ManyToOne(() => Room, (room) => room.messages)
     room: Room
 
     @OneToMany(() => RoomFile, (roomFile) => roomFile.message)

@@ -51,8 +51,8 @@ export class RoomService {
 
     async getByColumn(item: number | string, column: string) {
         return await this.roomRepository.findOne({
-            relations: ['hosts', 'users'],
-            [column]: item,
+            where: { [column]: item },
+            relations: ['hosts', 'users', 'messages'],
         })
     }
 
