@@ -8,6 +8,8 @@ import MessageModule from './message/message.module'
 import { FileModule } from './file/file.module'
 import { ServeStaticModule } from '@nestjs/serve-static'
 import { join } from 'path';
+import RoomModule from './room/room.module'
+import RoomMessageModule from './roomMessage/roomMessage.module'
 
 @Module({
     imports: [
@@ -21,6 +23,8 @@ import { join } from 'path';
         AuthModule,
         MessageModule,
         FileModule,
+        RoomModule,
+        RoomMessageModule,
     ],
 })
 export class AppModule {
