@@ -8,6 +8,7 @@ import RoomMessageModule from '../roomMessage/roomMessage.module'
 import { MulterModule } from '@nestjs/platform-express'
 import { diskStorage } from 'multer'
 import { Request } from 'express'
+import { RoomGateway } from './room.gateway'
 
 @Module({
     imports: [
@@ -32,6 +33,6 @@ import { Request } from 'express'
     ],
     exports: [RoomService],
     controllers: [RoomController],
-    providers: [RoomService],
+    providers: [RoomService, RoomGateway],
 })
 export default class RoomModule {}

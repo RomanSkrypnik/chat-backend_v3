@@ -1,13 +1,10 @@
 import { UserDto } from '../../user/dtos'
+import { FileDto } from '../../file/dtos'
 
 export class MessageDto {
     id: number
-
     text: string
-
     createdAt: string
-
-    files: [] | File[]
-
+    files: [] | FileDto[]
     user: UserDto
 }

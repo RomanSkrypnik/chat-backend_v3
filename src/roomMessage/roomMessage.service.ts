@@ -28,6 +28,7 @@ export class RoomMessageService {
         return await this.roomMessageRepository.find({
             relations: ['user', 'files'],
             where: { roomId },
+            order: { createdAt: 'DESC' },
             take,
             skip,
         })

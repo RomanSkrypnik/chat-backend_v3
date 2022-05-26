@@ -1,7 +1,7 @@
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
 import { RoomMessage } from '../roomMessage/roomMessage.entity'
 
-@Entity('RoomFile')
+@Entity('Room_File')
 export class RoomFile {
     @PrimaryGeneratedColumn()
     id: number

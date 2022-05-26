@@ -21,7 +21,7 @@ import { MutedService } from '../muted/muted.service'
 @WebSocketGateway({ cors: true })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @WebSocketServer()
-    server: Server
+    private server: Server
 
     constructor(
         private messageService: MessageService,

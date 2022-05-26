@@ -68,6 +68,28 @@ export class RoomService {
         return await this.roomRepository.save({ ...createDto, ...room })
     }
 
+    async addUserToRoom(userId: number, roomId: number) {
+        const currUser = await this.userService.getByColumn(userId, 'id')
+
+        if (!currUser) {
+            throw new HttpException('User not found', HttpStatus.BAD_REQUEST)
+        }
+
+        const room = await this.getByColumn(roomId, 'id')
+
+        if (!room) {
+            throw new HttpException('Room not found', HttpStatus.BAD_REQUEST)
+        }
+
+        const foundUser = room.users.find((user) => user.id === currUser.id)
+
+        if (!foundUser) {
+            room.users = [...room.users, currUser]
+        }
+
+        return await this.roomRepository.save(room)
+    }
+
     private async getFormattedRoom(room: Room, take: number, skip: number) {
         const messages = await this.roomMessageService.get(room.id, take, skip)
 

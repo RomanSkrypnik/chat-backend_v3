@@ -1,5 +1,6 @@
 import {
     Column,
+    CreateDateColumn,
     Entity,
     ManyToOne,
     OneToMany,
@@ -9,7 +10,7 @@ import { RoomFile } from '../roomFile/roomFile.entity'
 import { User } from '../user/user.entity'
 import { Room } from '../room/room.entity'
 
-@Entity({ name: 'RoomMessages' })
+@Entity({ name: 'Room_Messages' })
 export class RoomMessage {
     @PrimaryGeneratedColumn()
     id: number
@@ -22,6 +23,9 @@ export class RoomMessage {
 
     @Column()
     roomId: number
+
+    @CreateDateColumn()
+    createdAt: Date
 
     @ManyToOne(() => User, (user) => user.id)
     user: User
