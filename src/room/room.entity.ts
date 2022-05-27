@@ -30,13 +30,13 @@ export class Room {
     @OneToMany(() => RoomMessage, (roomMessage) => roomMessage.room)
     messages: RoomMessage[]
 
-    @ManyToMany(() => User)
+    @ManyToMany(() => User, (user) => user.hostRooms)
     @JoinTable({
         name: 'room_host',
     })
     hosts: User[]
 
-    @ManyToMany(() => User)
+    @ManyToMany(() => User, (user) => user.rooms)
     @JoinTable({
         name: 'room_user',
     })

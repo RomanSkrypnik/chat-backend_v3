@@ -17,13 +17,14 @@ export class RoomMessageService {
         @InjectRepository(RoomMessage)
         private roomMessageRepository: Repository<RoomMessage>,
         @Inject(forwardRef(() => RoomService))
-        private roomService: RoomService
-    ) {}
+        private roomService: RoomService,
+    ) {
+    }
 
     async get(
         roomId: number,
         take: number,
-        skip: number
+        skip: number,
     ): Promise<RoomMessage[]> {
         return await this.roomMessageRepository.find({
             relations: ['user', 'files'],
@@ -36,7 +37,7 @@ export class RoomMessageService {
 
     async getByColumn(
         item: string | number,
-        column: string
+        column: string,
     ): Promise<RoomMessage> {
         return await this.roomMessageRepository.findOne({
             where: { [column]: item },
@@ -46,9 +47,9 @@ export class RoomMessageService {
 
     async create(
         { roomId, text }: CreateRoomMessageDto,
-        userId: number
+        userId: number,
     ): Promise<RoomMessage> {
-        const room = await this.roomService.getByColumn(roomId, 'id')
+        const room = await this.roomService.getOneByColumn(roomId, 'id')
 
         if (!room) {
             throw new HttpException('Room not found', HttpStatus.BAD_REQUEST)
@@ -59,5 +60,41 @@ export class RoomMessageService {
             text,
             roomId: room.id,
         })
+    }
+
+    async read(messageId: number, userId: number) {
+        const message = await this.getByColumn(messageId, 'id')
+
+        if (!message) {
+            throw new HttpException('Message not found', HttpStatus.BAD_REQUEST)
+        }
+
+        if (message.userId === userId) {
+            throw new HttpException(
+                'Sender cannot read its own message',
+                HttpStatus.BAD_REQUEST,
+            )
+        }
+
+        const { users } = await this.roomService.getOneByColumn(
+            message.roomId,
+            'id'
+        )
+
+        const userIdx = users.findIndex((user) => user.id === userId)
+
+        if (userIdx !== -1) {
+            await this.roomMessageRepository.save({
+                id: messageId,
+                isRead: true,
+            })
+
+            return { ...message, isRead: true }
+        }
+
+        throw new HttpException(
+            'You cannot read this message',
+            HttpStatus.BAD_REQUEST,
+        )
     }
 }

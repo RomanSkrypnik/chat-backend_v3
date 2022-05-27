@@ -22,6 +22,13 @@ export class UserService {
         return await this.userRepository.find({ where: { hash } })
     }
 
+    async getOneWith(id: number, ...relations) {
+        return await this.userRepository.findOne({
+            where: { id },
+            relations,
+        })
+    }
+
     async create(createUserDto: CreateUserDto): Promise<User> {
         const entity = Object.assign(new User(), createUserDto)
         return await this.userRepository.save(entity)

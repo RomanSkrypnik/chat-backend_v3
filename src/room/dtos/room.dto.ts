@@ -5,3 +5,9 @@ export interface RoomSendMessage {
     hash: string
     roomId: number
 }
+
+export interface RoomReadMessage {
+    userId: number
+    messageId: number
+    roomId: number
+}

@@ -31,7 +31,7 @@ export class RoomService {
     }
 
     async getRoom(hash: string) {
-        const room = await this.getByColumn(hash, 'hash')
+        const room = await this.getOneByColumn(hash, 'hash')
 
         if (!room) {
             throw new HttpException('Room not found', HttpStatus.BAD_REQUEST)
@@ -50,6 +50,10 @@ export class RoomService {
     }
 
     async getByColumn(item: number | string, column: string) {
+        return await this.roomRepository.find({ [column]: item })
+    }
+
+    async getOneByColumn(item: number | string, column: string) {
         return await this.roomRepository.findOne({
             where: { [column]: item },
             relations: ['hosts', 'users', 'messages'],
@@ -75,7 +79,7 @@ export class RoomService {
             throw new HttpException('User not found', HttpStatus.BAD_REQUEST)
         }
 
-        const room = await this.getByColumn(roomId, 'id')
+        const room = await this.getOneByColumn(roomId, 'id')
 
         if (!room) {
             throw new HttpException('Room not found', HttpStatus.BAD_REQUEST)

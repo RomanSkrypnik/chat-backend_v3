@@ -15,6 +15,8 @@ import { SocketDto } from '../chat/dtos'
 import { RoomService } from './room.service'
 import { Server } from 'socket.io'
 import { RoomMessageDto } from '../roomMessage/dtos/message.dto'
+import { RoomMessageService } from '../roomMessage/roomMessage.service'
+import { RoomReadMessage } from './dtos'
 
 @WebSocketGateway({ cors: true, namespace: 'room' })
 export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -23,7 +25,8 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     constructor(
         private userService: UserService,
-        private roomService: RoomService
+        private roomService: RoomService,
+        private roomMessageService: RoomMessageService
     ) {}
 
     async handleConnection(client: any, ...args: any[]) {
@@ -34,7 +37,7 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
                 process.env.JWT_ACCESS_SECRET
             ) as UserDto
 
-            const user = await this.userService.getByColumn(decoded.id, 'id')
+            const user = await this.userService.getOneWith(decoded.id, 'rooms')
 
             if (!user) {
                 throw new HttpException(
@@ -42,17 +45,40 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
                     HttpStatus.BAD_REQUEST
                 )
             }
+            const currUser = { ...decoded, online: true }
 
-            client.user = { ...decoded, online: true }
+            client.user = currUser
+
+            user.rooms.forEach(({ id }) => {
+                this.server.to(`${id}`).emit('login', currUser)
+            })
 
             console.log('room connection')
         } catch (ex) {
+            console.log(ex)
             client.disconnect()
         }
     }
 
-    handleDisconnect(client: any): any {
+    handleDisconnect(client: SocketDto): any {
+        const { roomId } = client
+
+        if (roomId) {
+            const user = { ...client.user, isInRoom: false }
+            this.server.to(`${roomId}`).emit('leave', user)
+        }
+
         console.log('room disconnect')
+    }
+
+    @SubscribeMessage('leave')
+    async leave(
+        @ConnectedSocket() client: SocketDto,
+        @MessageBody() roomId: number
+    ) {
+        const user = { ...client.user, isInRoom: false }
+        this.server.to(`${roomId}`).emit('leave', { user, roomId })
+        console.log('leave')
     }
 
     @SubscribeMessage('join')
@@ -65,7 +91,9 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
         await this.roomService.addUserToRoom(user.id, roomId)
 
-        const data = { user, roomId }
+        const data = { user: { ...user, isInRoom: true }, roomId }
+
+        client.roomId = roomId
 
         client.join(roomStr)
         this.server.to(roomStr).emit('join', data)
@@ -77,5 +105,14 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
         @MessageBody() message: RoomMessageDto
     ) {
         this.server.to(`${message.roomId}`).emit('room-message', message)
+    }
+
+    @SubscribeMessage('read-message')
+    async handleReadMessage(
+        @ConnectedSocket() client: SocketDto,
+        @MessageBody() { userId, messageId, roomId }: RoomReadMessage
+    ) {
+        const message = await this.roomMessageService.read(messageId, userId)
+        this.server.to(`${roomId}`).emit('read-message', message)
     }
 }

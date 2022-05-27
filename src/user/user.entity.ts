@@ -1,13 +1,17 @@
 import {
-    BeforeInsert, BeforeUpdate,
-    Column, CreateDateColumn,
-    Entity,
+    BeforeInsert,
+    BeforeUpdate,
+    Column,
+    CreateDateColumn,
+    Entity, JoinTable,
+    ManyToMany,
     OneToMany,
-    PrimaryGeneratedColumn,
+    PrimaryGeneratedColumn, Table,
 } from 'typeorm'
 import { Message } from '../message/message.entity'
 import { Chat } from '../chat/chat.entity'
 import * as bcrypt from 'bcrypt'
+import { Room } from '../room/room.entity'
 
 @Entity('User')
 export class User {
@@ -46,6 +50,12 @@ export class User {
 
     @OneToMany(() => Chat, (chat) => chat.user1 && chat.user2)
     chats: Chat[]
+
+    @ManyToMany(() => Room, (room) => room.users)
+    rooms: Room[]
+
+    @ManyToMany(() => Room, (room) => room.hosts)
+    hostRooms: Room[]
 
     @BeforeInsert()
     @BeforeUpdate()

@@ -59,7 +59,7 @@ export class RoomController {
             avatar: avatar.filename,
         })
 
-        const data = await this.roomService.getByColumn(id, 'id')
+        const data = await this.roomService.getOneByColumn(id, 'id')
 
         res.status(HttpStatus.OK).json({ data })
     }

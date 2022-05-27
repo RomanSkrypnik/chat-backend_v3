@@ -4,6 +4,7 @@ import { MessageDto } from '../../message/dtos/message.dto'
 
 export interface SocketDto extends RemoteSocket<any, any> {
     user: UserDto
+    roomId?: number
 }
 
 export interface SocketSendMessage {

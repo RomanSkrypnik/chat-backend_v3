@@ -18,6 +18,9 @@ export class RoomMessage {
     @Column()
     text: string
 
+    @Column({ default: false })
+    isRead: boolean
+
     @Column({ select: false })
     userId: number
 
