@@ -49,10 +49,7 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
             client.user = currUser
 
-            user.rooms.forEach(({ id }) => {
-                this.server.to(`${id}`).emit('login', currUser)
-            })
-
+            this.server.emit('login', currUser)
             console.log('room connection')
         } catch (ex) {
             console.log(ex)
@@ -60,24 +57,34 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
         }
     }
 
-    handleDisconnect(client: SocketDto): any {
-        const { roomId } = client
-
-        if (roomId) {
-            const user = { ...client.user, isInRoom: false }
-            this.server.to(`${roomId}`).emit('leave', user)
-        }
-
+    async handleDisconnect(client: SocketDto): Promise<any> {
+        const user = await this.userService.getByColumn(client.user.id, 'id')
+        this.server.emit('logout', user)
         console.log('room disconnect')
     }
 
     @SubscribeMessage('leave')
-    async leave(
-        @ConnectedSocket() client: SocketDto,
-        @MessageBody() roomId: number
-    ) {
-        const user = { ...client.user, isInRoom: false }
-        this.server.to(`${roomId}`).emit('leave', { user, roomId })
+    async leave(@ConnectedSocket() client: SocketDto) {
+        const { rooms } = client
+
+        const roomId = Array.from(rooms).pop()
+
+        client.leave(roomId)
+
+        const sockets = (await this.server
+            .in(`${roomId}`)
+            .fetchSockets()) as SocketDto[]
+
+        const { users } = await this.roomService.getOneByColumn(roomId, 'id')
+
+        const roomUsers = users.map((user) => {
+            const isInRoom = sockets.some(
+                (socket) => socket.user.id === user.id
+            )
+            return { ...user, isInRoom }
+        })
+
+        this.server.to(roomId).emit('leave', roomUsers)
         console.log('leave')
     }
 
@@ -91,12 +98,22 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
         await this.roomService.addUserToRoom(user.id, roomId)
 
-        const data = { user: { ...user, isInRoom: true }, roomId }
-
-        client.roomId = roomId
-
         client.join(roomStr)
-        this.server.to(roomStr).emit('join', data)
+
+        const sockets = (await this.server
+            .in(roomStr)
+            .fetchSockets()) as SocketDto[]
+
+        const { users } = await this.roomService.getOneByColumn(roomId, 'id')
+
+        const roomUsers = users.map((user) => {
+            const isInRoom = sockets.some(
+                (socket) => socket.user.id === user.id
+            )
+            return { ...user, isInRoom }
+        })
+
+        this.server.to(roomStr).emit('join', roomUsers)
     }
 
     @SubscribeMessage('send-message')
