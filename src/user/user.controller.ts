@@ -6,14 +6,16 @@ import {
     Post,
     Req,
     Res,
+    UploadedFile,
     UseGuards,
+    UseInterceptors,
 } from '@nestjs/common'
 import { AtGuard } from '../auth/guards/at.guard'
 import { Request, Response } from 'express'
 import { UserService } from './user.service'
 import { EditUserDto } from './dtos'
 import { User } from './decorators/user.decorator'
-import * as Http from 'http'
+import { FileInterceptor } from '@nestjs/platform-express'
 
 @Controller('user')
 export class UserController {
@@ -21,7 +23,7 @@ export class UserController {
 
     @Get()
     @UseGuards(AtGuard)
-    async users(@Res() res: Response) {
+    async users(@Body() body, @Res() res: Response) {
         const data = await this.userService.getAll()
         res.status(HttpStatus.OK).json({ data })
     }
@@ -45,12 +47,16 @@ export class UserController {
 
     @Post('edit')
     @UseGuards(AtGuard)
+    @UseInterceptors(FileInterceptor('avatar'))
     async edit(
+        @UploadedFile() file: Express.Multer.File,
         @User('id') userId: number,
         @Body() body: EditUserDto,
         @Res() res: Response
     ) {
-        await this.userService.update(userId, body)
+        const fields = { ...body, avatar: file.filename }
+        await this.userService.update(userId, fields)
+
         const data = await this.userService.getByColumn(userId, 'id')
         res.status(HttpStatus.OK).json({ data })
     }
