@@ -3,10 +3,10 @@ import {
     BeforeUpdate,
     Column,
     CreateDateColumn,
-    Entity, JoinTable,
+    Entity,
     ManyToMany,
     OneToMany,
-    PrimaryGeneratedColumn, Table,
+    PrimaryGeneratedColumn,
 } from 'typeorm'
 import { Message } from '../message/message.entity'
 import { Chat } from '../chat/chat.entity'
@@ -29,6 +29,9 @@ export class User {
 
     @Column({ select: false })
     password: string
+
+    @Column({ nullable: true })
+    bio: string
 
     @Column({ unique: true })
     hash: string

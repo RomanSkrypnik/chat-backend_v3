@@ -18,6 +18,9 @@ export class Room {
     @Column()
     name: string
 
+    @Column({ type: 'text' })
+    description: string
+
     @Column({ nullable: true })
     avatar: string
 
