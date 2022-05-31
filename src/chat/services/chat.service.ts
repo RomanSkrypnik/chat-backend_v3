@@ -48,7 +48,7 @@ export class ChatService {
             throw new HttpException('User not found', HttpStatus.BAD_REQUEST)
         }
 
-        const { user1, user2, ...chat } = await this.getOne(userId, user.id)
+        const chat = await this.getOne(userId, user.id)
 
         if (!chat) {
             return { messages: [], user }
@@ -64,6 +64,9 @@ export class ChatService {
             user.id
         ))
         const isMuted = !!(await this.mutedService.getOne(chat.id, userId))
+
+        delete chat.user1
+        delete chat.user2
 
         return {
             ...chat,
@@ -126,6 +129,9 @@ export class ChatService {
         return await this.chatRepository.find({
             where: [{ user1Id: userId }, { user2Id: userId }],
             relations: ['user1', 'user2'],
+            order: {
+                updatedAt: 'DESC',
+            },
         })
     }
 
@@ -157,6 +163,10 @@ export class ChatService {
                 }
             })
         )
+    }
+
+    async update(id: number, fields: Partial<Chat>) {
+        return await this.chatRepository.save(fields)
     }
 
     private getCondition(user1Id: number, user2Id: number) {

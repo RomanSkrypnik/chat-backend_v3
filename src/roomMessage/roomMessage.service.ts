@@ -17,14 +17,13 @@ export class RoomMessageService {
         @InjectRepository(RoomMessage)
         private roomMessageRepository: Repository<RoomMessage>,
         @Inject(forwardRef(() => RoomService))
-        private roomService: RoomService,
-    ) {
-    }
+        private roomService: RoomService
+    ) {}
 
     async get(
         roomId: number,
         take: number,
-        skip: number,
+        skip: number
     ): Promise<RoomMessage[]> {
         return await this.roomMessageRepository.find({
             relations: ['user', 'files'],

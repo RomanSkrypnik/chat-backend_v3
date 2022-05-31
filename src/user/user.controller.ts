@@ -23,8 +23,8 @@ export class UserController {
 
     @Get()
     @UseGuards(AtGuard)
-    async users(@Body() body, @Res() res: Response) {
-        const data = await this.userService.getAll()
+    async users(@User('id') userId, @Body() body, @Res() res: Response) {
+        const data = await this.userService.getAll(userId)
         res.status(HttpStatus.OK).json({ data })
     }
 

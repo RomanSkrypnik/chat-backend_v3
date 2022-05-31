@@ -17,6 +17,7 @@ import { UserDto } from '../user/dtos'
 import { UserService } from '../user/user.service'
 import { BlockedService } from '../blocked/blocked.service'
 import { MutedService } from '../muted/muted.service'
+import { ChatService } from './services/chat.service'
 
 @WebSocketGateway({ cors: true })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -24,19 +25,21 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private server: Server
 
     constructor(
+        private chatService: ChatService,
         private messageService: MessageService,
         private socketService: SocketService,
         private userService: UserService,
         private blockedService: BlockedService,
-        private mutedService: MutedService
-    ) {}
+        private mutedService: MutedService,
+    ) {
+    }
 
     async handleConnection(client: SocketDto, ...args: any[]) {
         const bearerToken = client.handshake.headers.authorization.split(' ')[1]
         try {
             const decoded = jwt.verify(
                 bearerToken,
-                process.env.JWT_ACCESS_SECRET
+                process.env.JWT_ACCESS_SECRET,
             ) as UserDto
 
             const user = await this.userService.getByColumn(decoded.id, 'id')
@@ -44,7 +47,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
             if (!user) {
                 throw new HttpException(
                     'User not found',
-                    HttpStatus.BAD_REQUEST
+                    HttpStatus.BAD_REQUEST,
                 )
             }
 
@@ -78,23 +81,35 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @SubscribeMessage('send-message')
     async handleSendMessage(
         @ConnectedSocket() client: SocketDto,
-        @MessageBody() { message, hash }: SocketSendMessage
+        @MessageBody() { message, hash, withChat }: SocketSendMessage,
     ) {
         const sockets = (await this.server.fetchSockets()) as SocketDto[]
 
         const companionSocket = this.socketService.getOne(sockets, hash)
 
-        client.emit('chat-message', message)
+        if (withChat) {
+            const clientChat = await this.chatService.getChat(message.user.id, hash)
 
-        if (companionSocket) {
-            this.server.to(companionSocket.id).emit('chat-message', message)
+            client.emit('new-chat', clientChat)
+
+            if (companionSocket) {
+                const companionChat = await this.chatService.getChat(companionSocket.user.id, client.user.hash)
+                this.server.to(companionSocket.id).emit('new-chat', companionChat)
+            }
+        } else {
+            client.emit('chat-message', message)
+
+            if (companionSocket) {
+                this.server.to(companionSocket.id).emit('chat-message', message)
+            }
         }
+
     }
 
     @SubscribeMessage('read-message')
     async handleReadMessage(
         @ConnectedSocket() client: SocketDto,
-        @MessageBody() { userId, messageId }: SocketReadMessage
+        @MessageBody() { userId, messageId }: SocketReadMessage,
     ) {
         const message = await this.messageService.read(messageId, userId)
 
@@ -102,7 +117,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
         const companionSocket = this.socketService.getOne(
             sockets,
-            message.user.hash
+            message.user.hash,
         )
 
         client.emit('read-message', message)
@@ -115,18 +130,18 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @SubscribeMessage('block-unblock')
     async handleBlockUnblock(
         @ConnectedSocket() client: SocketDto,
-        @MessageBody() blockedId: number
+        @MessageBody() blockedId: number,
     ) {
         const chat = await this.blockedService.createOrDelete(
             client.user.id,
-            blockedId
+            blockedId,
         )
 
         const sockets = (await this.server.fetchSockets()) as SocketDto[]
 
         const companionSocket = this.socketService.getOne(
             sockets,
-            chat.user.hash
+            chat.user.hash,
         )
 
         client.emit('block-unblock', chat)
@@ -141,7 +156,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @SubscribeMessage('mute-unmute')
     async handleMuteUnmute(
         @ConnectedSocket() client: SocketDto,
-        @MessageBody() mutedId: number
+        @MessageBody() mutedId: number,
     ) {
         const chat = await this.mutedService.muteUnmute(client.user.id, mutedId)
 
@@ -149,7 +164,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
         const companionSocket = this.socketService.getOne(
             sockets,
-            chat.user.hash
+            chat.user.hash,
         )
 
         client.emit('mute-unmute', chat)

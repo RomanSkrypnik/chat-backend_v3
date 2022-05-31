@@ -59,13 +59,18 @@ export class MessageService {
             throw new HttpException('User not found', HttpStatus.BAD_REQUEST)
         }
 
-        const { id } = await this.chatService.getOrCreate(userId, user.id)
+        const chat = await this.chatService.getOrCreate(userId, user.id)
 
-        return await this.messageRepository.save({
+        const message = await this.messageRepository.save({
             text,
-            chatId: id,
+            chatId: chat.id,
             userId,
         })
+
+        chat.updatedAt = new Date()
+        await this.chatService.update(chat.id, chat)
+
+        return message
     }
 
     async get(chatId: number, skip: number, take: number): Promise<Message[]> {

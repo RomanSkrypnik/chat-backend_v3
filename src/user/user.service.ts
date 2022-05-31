@@ -1,5 +1,5 @@
 import { InjectRepository } from '@nestjs/typeorm'
-import { Repository } from 'typeorm'
+import { Not, Repository } from 'typeorm'
 import { User } from './user.entity'
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common'
 import { CreateUserDto } from './dtos'
@@ -10,8 +10,10 @@ export class UserService {
         @InjectRepository(User) private userRepository: Repository<User>
     ) {}
 
-    async getAll(): Promise<User[]> {
-        return await this.userRepository.find()
+    async getAll(id: number): Promise<User[]> {
+        return await this.userRepository.find({
+            where: { id: Not(id) },
+        })
     }
 
     async getByColumn(item, column): Promise<User> {

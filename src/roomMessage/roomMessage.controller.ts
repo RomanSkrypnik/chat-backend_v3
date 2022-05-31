@@ -1,9 +1,9 @@
 import {
     Body,
-    Controller,
+    Controller, Get,
     HttpException,
     HttpStatus,
-    Post,
+    Post, Query, Req,
     Res,
     UploadedFiles,
     UseGuards,
@@ -12,10 +12,11 @@ import {
 import { FilesInterceptor } from '@nestjs/platform-express'
 import { AtGuard } from '../auth/guards/at.guard'
 import { User } from '../user/decorators/user.decorator'
-import { Response } from 'express'
+import { Request, Response } from 'express'
 import { RoomMessageService } from './roomMessage.service'
 import { CreateRoomMessageDto } from './dtos'
 import { RoomFileService } from '../roomFile/roomFile.service'
+import { MessageQueryDto } from '../message/dtos/messageQuery.dto'
 
 @Controller('room-message')
 export class RoomMessageController {
@@ -23,6 +24,30 @@ export class RoomMessageController {
         private roomMessageService: RoomMessageService,
         private roomFileService: RoomFileService
     ) {}
+
+    @Get(':id')
+    @UseGuards(AtGuard)
+    async messages(
+        @Query() query: MessageQueryDto,
+        @Req() req: Request,
+        @Res() res: Response
+    ) {
+        let skip = +query.skip
+        const take = +query.take
+        const id = +req.params.id
+
+        const messages = await this.roomMessageService.get(id, skip, take)
+        let isLoaded = false
+        skip += 40
+
+        if (messages.length < 40) {
+            isLoaded = true
+        }
+
+        const data = { messages, skip, isLoaded }
+
+        res.status(HttpStatus.OK).json({ data })
+    }
 
     @Post('create')
     @UseInterceptors(FilesInterceptor('files'))
