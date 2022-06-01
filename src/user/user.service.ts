@@ -1,5 +1,5 @@
 import { InjectRepository } from '@nestjs/typeorm'
-import { Not, Repository } from 'typeorm'
+import { ILike, Not, Repository } from 'typeorm'
 import { User } from './user.entity'
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common'
 import { CreateUserDto } from './dtos'
@@ -20,8 +20,10 @@ export class UserService {
         return await this.userRepository.findOne({ [column]: item })
     }
 
-    async getBySearch(hash: string) {
-        return await this.userRepository.find({ where: { hash } })
+    async getBySearch(name: string) {
+        return await this.userRepository.find({
+            where: { name: ILike(`${name}%`) },
+        })
     }
 
     async getOneWith(id: number, ...relations) {
@@ -44,5 +46,15 @@ export class UserService {
         }
 
         return await this.userRepository.save(Object.assign(user, fields))
+    }
+
+    async comparePasswords(id: number, password: string) {
+        const user = await this.userRepository
+            .createQueryBuilder('user')
+            .where('user.email = :email', { id })
+            .addSelect('user.password')
+            .getOne()
+
+        return user.password === password
     }
 }

@@ -64,11 +64,25 @@ export class UserController {
     @Post('change-password')
     @UseGuards(AtGuard)
     async changePassword(
-        @User('id') userId,
+        @User('id') userId: number,
         @Body() body: { password: string },
         @Res() res: Response
     ) {
         await this.userService.update(userId, body)
         res.status(HttpStatus.OK).json({ message: 'Password changed' })
+    }
+
+    @Post('compare-password')
+    @UseGuards(AtGuard)
+    async comparePassword(
+        @User('id') userId: number,
+        @Body() body: { password: string },
+        @Res() res: Response
+    ) {
+        const data = await this.userService.comparePasswords(
+            userId,
+            body.password
+        )
+        res.status(HttpStatus.OK).json({ data })
     }
 }
