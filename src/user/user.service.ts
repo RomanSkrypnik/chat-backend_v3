@@ -7,8 +7,9 @@ import { CreateUserDto } from './dtos'
 @Injectable()
 export class UserService {
     constructor(
-        @InjectRepository(User) private userRepository: Repository<User>
-    ) {}
+        @InjectRepository(User) private userRepository: Repository<User>,
+    ) {
+    }
 
     async getAll(id: number): Promise<User[]> {
         return await this.userRepository.find({
@@ -51,10 +52,17 @@ export class UserService {
     async comparePasswords(id: number, password: string) {
         const user = await this.userRepository
             .createQueryBuilder('user')
-            .where('user.email = :email', { id })
+            .where('user.id = :id', { id })
             .addSelect('user.password')
             .getOne()
 
-        return user.password === password
+        if (user.password !== password) {
+            throw new HttpException(
+                'Wrong old password',
+                HttpStatus.BAD_REQUEST
+            )
+        }
+
+        return true
     }
 }

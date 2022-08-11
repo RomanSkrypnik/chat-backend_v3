@@ -63,4 +63,11 @@ export class RoomController {
 
         res.status(HttpStatus.OK).json({ data })
     }
+
+    @Post('search')
+    @UseGuards(AtGuard)
+    async search(@Body() body: { search: string }, @Res() res: Response) {
+        const data = await this.roomService.getRoomBySearch(body.search)
+        res.status(HttpStatus.OK).json({ data })
+    }
 }

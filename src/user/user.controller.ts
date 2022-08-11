@@ -19,7 +19,8 @@ import { FileInterceptor } from '@nestjs/platform-express'
 
 @Controller('user')
 export class UserController {
-    constructor(private userService: UserService) {}
+    constructor(private userService: UserService) {
+    }
 
     @Get()
     @UseGuards(AtGuard)
@@ -52,7 +53,7 @@ export class UserController {
         @UploadedFile() file: Express.Multer.File,
         @User('id') userId: number,
         @Body() body: EditUserDto,
-        @Res() res: Response
+        @Res() res: Response,
     ) {
         const fields = { ...body, avatar: file.filename }
         await this.userService.update(userId, fields)
@@ -66,7 +67,7 @@ export class UserController {
     async changePassword(
         @User('id') userId: number,
         @Body() body: { password: string },
-        @Res() res: Response
+        @Res() res: Response,
     ) {
         await this.userService.update(userId, body)
         res.status(HttpStatus.OK).json({ message: 'Password changed' })
@@ -77,11 +78,11 @@ export class UserController {
     async comparePassword(
         @User('id') userId: number,
         @Body() body: { password: string },
-        @Res() res: Response
+        @Res() res: Response,
     ) {
         const data = await this.userService.comparePasswords(
             userId,
-            body.password
+            body.password,
         )
         res.status(HttpStatus.OK).json({ data })
     }

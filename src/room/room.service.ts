@@ -7,11 +7,11 @@ import {
 } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Room } from './room.entity'
-import { Repository } from 'typeorm'
+import { ILike, Repository } from 'typeorm'
 import { UserService } from '../user/user.service'
 import { RoomMessageService } from '../roomMessage/roomMessage.service'
 import { randomBytes } from 'crypto'
-import { CreateRoomDto } from './dtos/create.dto'
+import { CreateRoomDto } from './dtos'
 
 @Injectable()
 export class RoomService {
@@ -92,6 +92,16 @@ export class RoomService {
         }
 
         return await this.roomRepository.save(room)
+    }
+
+    async getRoomBySearch(search: string) {
+        const rooms = await this.roomRepository.find({
+            where: { name: ILike(`${search}%`) },
+        })
+
+        return await Promise.all(rooms.map(
+            async (room) => await this.getFormattedRoom(room, 40, 0)
+        ))
     }
 
     private async getFormattedRoom(room: Room, take: number, skip: number) {

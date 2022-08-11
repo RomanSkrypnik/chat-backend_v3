@@ -1,7 +1,3 @@
-export class UsersDto {
-
-}
-
 export class UserDto {
     id: number
     username: string
