@@ -26,8 +26,9 @@ export class ChatService {
         private blockedService: BlockedService,
         @Inject(forwardRef(() => MutedService))
         private mutedService: MutedService,
-        private userService: UserService
-    ) {}
+        private userService: UserService,
+    ) {
+    }
 
     async getChats(userId: number) {
         const user = await this.userService.getByColumn(userId, 'id')
@@ -57,11 +58,11 @@ export class ChatService {
         const messages = await this.messageService.get(chat.id, 0, 40)
         const isBlockedByMe = !!(await this.blockedService.getOne(
             chat.id,
-            userId
+            userId,
         ))
         const isBlockedMyCompanion = !!(await this.blockedService.getOne(
             chat.id,
-            user.id
+            user.id,
         ))
         const isMuted = !!(await this.mutedService.getOne(chat.id, userId))
 
@@ -120,6 +121,9 @@ export class ChatService {
             ],
             select: ['id'],
             relations: ['user1', 'user2'],
+            order: {
+                updatedAt: 'DESC',
+            },
         })
 
         return this.getFormattedChats(chats, userId)
@@ -142,13 +146,13 @@ export class ChatService {
                 const user = user1.id === userId ? user2 : user1
                 const isBlockedByMe = !!(await this.blockedService.getOne(
                     chat.id,
-                    userId
+                    userId,
                 ))
                 const isBlockedByCompanion =
                     !!(await this.blockedService.getOne(chat.id, user.id))
                 const isMuted = !!(await this.mutedService.getOne(
                     chat.id,
-                    userId
+                    userId,
                 ))
 
                 return {
@@ -161,7 +165,7 @@ export class ChatService {
                     skip: 40,
                     isLoaded: false,
                 }
-            })
+            }),
         )
     }
 
