@@ -34,7 +34,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     ) {
     }
 
-    async handleConnection(client: SocketDto, ...args: any[]) {
+    async handleConnection(client: SocketDto) {
         const bearerToken = client.handshake.headers.authorization.split(' ')[1]
         try {
             const decoded = jwt.verify(
@@ -81,29 +81,15 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @SubscribeMessage('send-message')
     async handleSendMessage(
         @ConnectedSocket() client: SocketDto,
-        @MessageBody() { message, hash, withChat }: SocketSendMessage,
+        @MessageBody() { message, hash }: SocketSendMessage
     ) {
         const sockets = (await this.server.fetchSockets()) as SocketDto[]
 
         const companionSocket = this.socketService.getOne(sockets, hash)
 
-        if (withChat) {
-            const clientChat = await this.chatService.getChat(message.user.id, hash)
-
-            client.emit('new-chat', clientChat)
-
-            if (companionSocket) {
-                const companionChat = await this.chatService.getChat(companionSocket.user.id, client.user.hash)
-                this.server.to(companionSocket.id).emit('new-chat', companionChat)
-            }
-        } else {
-            client.emit('chat-message', message)
-
-            if (companionSocket) {
-                this.server.to(companionSocket.id).emit('chat-message', message)
-            }
+        if (companionSocket) {
+            this.server.to(companionSocket.id).emit('chat-message', message)
         }
-
     }
 
     @SubscribeMessage('read-message')

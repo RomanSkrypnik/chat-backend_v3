@@ -1,15 +1,15 @@
-import { forwardRef, Module } from '@nestjs/common'
-import { UserModule } from '../user/user.module'
-import { ChatService } from './services/chat.service'
-import { TypeOrmModule } from '@nestjs/typeorm'
-import { Chat } from './chat.entity'
-import { ChatController } from './chat.controller'
-import MessageModule from '../message/message.module'
-import { ChatGateway } from './chat.gateway'
-import { SocketService } from './services/socket.service'
-import { Message } from '../message/message.entity'
-import BlockedModule from '../blocked/blocked.module'
-import MutedModule from '../muted/muted.module'
+import { forwardRef, Module } from '@nestjs/common';
+import { UserModule } from '../user/user.module';
+import { ChatService } from './services/chat.service';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Chat } from './chat.entity';
+import { ChatController } from './chat.controller';
+import MessageModule from '../message/message.module';
+import { ChatGateway } from './chat.gateway';
+import { SocketService } from './services/socket.service';
+import { Message } from '../message/message.entity';
+import BlockedModule from '../blocked/blocked.module';
+import MutedModule from '../muted/muted.module';
 
 @Module({
     imports: [
@@ -23,4 +23,5 @@ import MutedModule from '../muted/muted.module'
     controllers: [ChatController],
     providers: [ChatService, SocketService, ChatGateway],
 })
-export default class ChatModule {}
+export default class ChatModule {
+}

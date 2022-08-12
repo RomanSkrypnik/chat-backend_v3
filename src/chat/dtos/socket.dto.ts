@@ -10,7 +10,6 @@ export interface SocketDto extends RemoteSocket<any, any> {
 export interface SocketSendMessage {
     message: MessageDto
     hash: string
-    withChat: boolean
 }
 
 export interface SocketReadMessage {
