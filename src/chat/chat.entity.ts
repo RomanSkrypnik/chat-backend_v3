@@ -4,30 +4,30 @@ import {
     ManyToOne,
     OneToMany,
     PrimaryGeneratedColumn,
-} from 'typeorm'
-import { User } from '../user/user.entity'
-import { Message } from '../message/message.entity'
+} from 'typeorm';
+import { User } from '../user/user.entity';
+import { Message } from '../message/message.entity';
 
 @Entity('Chat')
 export class Chat {
     @PrimaryGeneratedColumn()
-    id: number
+    id: number;
 
     @Column({ select: false })
-    user1Id: number
+    user1Id: number;
 
     @Column({ select: false })
-    user2Id: number
+    user2Id: number;
 
     @CreateDateColumn()
-    updatedAt: Date
+    updatedAt: Date;
 
     @ManyToOne(() => User, (user) => user.chats)
-    user1: User
+    user1: User;
 
     @ManyToOne(() => User, (user) => user.chats)
-    user2: User
+    user2: User;
 
-    @OneToMany(() => Message, (message) => message.chat)
-    messages: Message[]
+    @OneToMany(() => Message, (message) => message.chat, { cascade: true })
+    messages: Message[];
 }

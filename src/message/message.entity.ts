@@ -11,7 +11,7 @@ import { Chat } from '../chat/chat.entity'
 import { User } from '../user/user.entity'
 import { File } from '../file/file.entity'
 
-@Entity('Message')
+@Entity('Message', )
 export class Message {
     @PrimaryGeneratedColumn()
     id: number

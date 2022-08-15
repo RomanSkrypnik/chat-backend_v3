@@ -40,7 +40,10 @@ export class ChatController {
         @Body() body: { search: string },
         @Res() res: Response,
     ) {
-        const data = await this.chatService.getChatBySearch(userId, body.search);
+        const data = await this.chatService.getChatBySearch(
+            userId,
+            body.search
+        );
         res.status(HttpStatus.OK).json({ data });
     }
 }

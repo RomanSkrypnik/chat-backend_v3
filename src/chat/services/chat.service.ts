@@ -34,12 +34,17 @@ export class ChatService {
         const user = await this.userService.getByColumn(userId, 'id');
 
         if (!user) {
-            throw new HttpException('User is not found', HttpStatus.BAD_REQUEST);
+            throw new HttpException(
+                'User is not found',
+                HttpStatus.BAD_REQUEST,
+            );
         }
 
         const chats = await this.getAll(userId);
 
-        return chats.map((chat) => this.getFormattedChat(chat, userId));
+        return Promise.all(
+            chats.map(async (chat) => await this.getFormattedChat(chat, userId)),
+        );
     }
 
     async getChat(userId: number, userHash: string) {
@@ -92,7 +97,7 @@ export class ChatService {
 
     async getByColumn(item: string | number, column: string) {
         return await this.chatRepository.findOne({
-            [column]: item,
+            where: { [column]: item },
             relations: ['user1', 'user2'],
         });
     }
@@ -119,8 +124,11 @@ export class ChatService {
 
         const chats = await this.chatRepository.find({
             where: [
-                { user1: { [column]: ILike(`${search}%`) } },
-                { user2: { [column]: ILike(`${search}%`) } },
+                {
+                    user1: { [column]: ILike(`${search}%`) },
+                    user2: { id: userId },
+                },
+                { user1: { id: userId }, user2: { [column]: ILike(`${search}%`) } },
             ],
             select: ['id'],
             relations: ['user1', 'user2'],
@@ -129,7 +137,9 @@ export class ChatService {
             },
         });
 
-        return chats.map((chat) => this.getFormattedChat(chat, userId));
+        return Promise.all(
+            chats.map(async (chat) => await this.getFormattedChat(chat, userId)),
+        );
     }
 
     async getAll(userId: number): Promise<Chat[]> {

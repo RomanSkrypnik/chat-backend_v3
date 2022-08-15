@@ -91,11 +91,11 @@ export class MessageController {
         await this.fileService.createBulk(uploadedFiles, id);
 
         if (isNewChat) {
-            const message = await this.messageService.getByColumn(id, 'id');
-            res.status(HttpStatus.OK).json({ data: { message } });
-        } else {
             const chat = await this.chatService.getChat(userId, body.hash);
-            res.status(HttpStatus.OK).json({ data: { chat } });
+            res.status(HttpStatus.OK).json({ chat });
+        } else {
+            const message = await this.messageService.getByColumn(id, 'id');
+            res.status(HttpStatus.OK).json({ message });
         }
     }
 }

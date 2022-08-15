@@ -20,7 +20,10 @@ export class MessageService {
         const message = await this.getByColumn(id, 'id');
 
         if (!message) {
-            throw new HttpException('Message not found', HttpStatus.BAD_REQUEST);
+            throw new HttpException(
+                'Message not found',
+                HttpStatus.BAD_REQUEST,
+            );
         }
 
         if (message.userId === userId) {
@@ -34,6 +37,7 @@ export class MessageService {
             message.chatId,
             'id',
         );
+
 
         if (user1.id === userId || user2.id === userId) {
             await this.messageRepository.save({
